@@ -1,0 +1,38 @@
+﻿  Main.cpp
+u:\physics\finalproject\vanyaopengl\particlesystem.h(62): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\particlesystem.h(63): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\particlesystem.h(90): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\particlesystem.h(91): warning C4244: '-=': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\clothsystem.h(69): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\clothsystem.h(71): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\clothsystem.h(101): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\clothsystem.h(103): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\distancechecks.h(131): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(248): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(349): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(354): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(382): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(384): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\rigidbody.h(490): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\collisionresponse.h(158): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\collisionresponse.h(180): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\collisionresponse.h(209): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\bookkeeping.h(260): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\bookkeeping.h(271): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\bookkeeping.h(282): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\bookkeeping.h(466): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(112): warning C4305: 'initializing': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(113): warning C4305: 'initializing': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(120): warning C4305: 'initializing': truncation from 'double' to 'GLfloat'
+u:\physics\finalproject\vanyaopengl\main.cpp(376): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(411): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(444): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(857): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(858): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(862): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(863): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(865): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(866): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(873): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+  VanyaOpenGL.vcxproj -> U:\Physics\FinalProject\Debug\VanyaOpenGL.exe
+  VanyaOpenGL.vcxproj -> U:\Physics\FinalProject\Debug\VanyaOpenGL.pdb (Partial PDB)
