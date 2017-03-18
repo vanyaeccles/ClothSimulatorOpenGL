@@ -13,8 +13,8 @@ class ParticleSpring
 {
 public:
 
-	struct Spring
-	{
+	//struct Spring
+	//{
 		Particle *p1, *p2;
 
 		float restLength;
@@ -22,26 +22,56 @@ public:
 		float Ks, Kd;
 
 		int springType;
-	};
+	//};
 
 
 	ParticleSpring(Particle *part1, Particle *part2, float _Ks, float _Kd, int _springType) 
 	{
-		Spring spring;
+		//Spring spring;
 
-		spring.p1 = part1;
-		spring.p2 = part2;
+		p1 = part1;
+		p2 = part2;
 
-		spring.Ks = _Ks;
-		spring.Kd = _Kd;
+		Ks = _Ks;
+		Kd = _Kd;
 
-		spring.springType = _springType;
+		springType = _springType;
 
-		glm::vec3 p2Pos = (spring.p2->position);
-		glm::vec3 p1Pos = (spring.p1->position);
+		glm::vec3 p2Pos = (p2->position);
+		glm::vec3 p1Pos = (p1->position);
 
 		glm::vec3 differenceVector = (p1Pos - p2Pos);
-		spring.restLength = sqrt(glm::dot(differenceVector, differenceVector));
+		restLength = sqrt(glm::dot(differenceVector, differenceVector));
 
 	}
+
+
+	void satisfySpring(float timestep)
+	{
+		glm::vec3 p2Pos = (p2->position);
+		glm::vec3 p2PosOld = (p2->oldPosition);
+
+		glm::vec3 p1Pos = (p1->position);
+		glm::vec3 p1PosOld = (p1->oldPosition);
+
+
+		glm::vec3 v1 = p1->getVerletVelocity(timestep);
+		glm::vec3 v2 = p2->getVerletVelocity(timestep);
+
+		glm::vec3 deltaPos = p1Pos - p2Pos;
+		glm::vec3 deltaVel = v1 - v2;
+
+		float distance = glm::length(deltaPos);
+
+		float leftTerm = -Ks * (distance - restLength);
+		float rightTerm = Kd * (glm::dot(deltaVel, deltaPos) / distance);
+
+		glm::vec3 SpringForce = (leftTerm + rightTerm) * glm::normalize(deltaPos);
+
+		p1->applySpringForce(SpringForce, timestep);
+		p2->applySpringForce(-1.0f * SpringForce, timestep);
+
+	}
+
+	
 };

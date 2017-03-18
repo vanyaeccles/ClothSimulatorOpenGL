@@ -125,7 +125,7 @@ GLfloat coeffRest = 0.45;
 glm::vec3 planeNormal(0.0f, 1.0f, 0.0f);
 glm::vec3 plane2Normal = glm::rotate(planeNormal, ninetyfive, glm::vec3(1.0f, 0.0f, 0.0f));
 
-glm::vec3 planePos(0.0f, -15.0f, 0.0f);
+glm::vec3 planePos(0.0f, -10.0f, 0.0f);
 GLfloat planeThreshold = 0.0f;
 
 glm::vec3 posVec(0.0f, 0.0f, 0.0f);
@@ -214,6 +214,8 @@ int main()
 	Model clothM("U:/Physics/FinalProject/Stuff/Models/clothModel.obj");
 
 	Model sphere("U:/Physics/FinalProject/Stuff/Models/sphere/sphere.obj");
+
+	Model quadModel("U:/Physics/FinalProject/Stuff/Models/quadModel.obj");
 
 	// Load textures
 	//GLuint painting = loadTexture("U:/Rendering/RTRAssignment_2/Textures/desk.jpg");
@@ -359,9 +361,9 @@ int main()
 	//cloth.cloParts.initializeParticles();
 	//cloth.initialize();
 
-	bool structuralSprings = 0;
+	bool structuralSprings = 1;
 	bool shearSprings = 1;
-	bool flexionSprings = 0;
+	bool flexionSprings = 1;
 
 	//Alternative implementation
 	Cloth cloth1(10, 10, 30, 30, structuralSprings, shearSprings, flexionSprings);
@@ -405,10 +407,11 @@ int main()
 
 		float dampingConstant = 0.01f;
 		int constraintIterations = 5;
+		int springIterations = 1;
 
 		if (playSimulation)
 		{
-			cloth1.Update(dampingConstant, constraintIterations, timestep);
+			cloth1.Update(dampingConstant, constraintIterations, springIterations, timestep);
 		}
 		
 
@@ -436,15 +439,20 @@ int main()
 			//Translate to the particles position
 			model = glm::translate(model, glm::vec3(partX, partY, partZ));
 			glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-			sphere.Draw(whiteShader);
+			quadModel.Draw(whiteShader);
 		}
 
-		glm::vec3 grav(0.0f, -9.811f, 0.0f);
+		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
+
+
+		float wind1 = 10.0f * sin(glfwGetTime()); // 0.5f;
+
+		glm::vec3 wind(wind1, 0, 0.2);
 
 		cloth1.addForce(grav, timestep);
+		cloth1.applyWindForce(wind, timestep);
 
-
-
+		cloth1.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 
 

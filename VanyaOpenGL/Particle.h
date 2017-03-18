@@ -49,15 +49,30 @@ public:
 		colour[2] = (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / 1));
 	}
 
+
 	glm::vec3& getPosition()
 	{ 
 		return position; 
 	}
 
+
+
 	void applyGravityForce(glm::vec3 _force, float timestep)
 	{
 		acceleration += _force * massinv * timestep;
 	}
+
+
+	void applySpringForce(glm::vec3 _force, float timestep) 
+	{
+		acceleration += _force * massinv * timestep;
+	}
+
+	void applyForce(glm::vec3 _force, float timestep)
+	{
+		acceleration += _force * massinv * timestep;
+	}
+
 
 	void verletIntegration(float dampingConstant, float timestep)
 	{
@@ -70,6 +85,12 @@ public:
 			zeroAcceleration();
 		}
 	}
+
+	glm::vec3 getVerletVelocity(float timestep)
+	{
+		return (position - oldPosition) / timestep;
+	}
+
 
 	void zeroAcceleration()
 	{

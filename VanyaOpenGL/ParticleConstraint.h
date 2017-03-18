@@ -32,6 +32,7 @@ public:
 		restDistance = glm::length(differenceVector);
 	}
 
+
 	//This basically ensures a particle is within a rest distance of a connected particle
 	void satisfyConstraint()
 	{
