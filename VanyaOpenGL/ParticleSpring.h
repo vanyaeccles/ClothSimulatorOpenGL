@@ -13,8 +13,6 @@ class ParticleSpring
 {
 public:
 
-	//struct Spring
-	//{
 		Particle *p1, *p2;
 
 		float restLength;
@@ -22,12 +20,10 @@ public:
 		float Ks, Kd;
 
 		int springType;
-	//};
 
 
 	ParticleSpring(Particle *part1, Particle *part2, float _Ks, float _Kd, int _springType) 
 	{
-		//Spring spring;
 
 		p1 = part1;
 		p2 = part2;

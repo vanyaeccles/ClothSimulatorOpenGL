@@ -256,7 +256,7 @@ class DistanceChecker
 		//Either way we've found the 
 		this->closestPoint = point;
 		this->distance = dist;
-		std::cout << distance << std::endl;
+		//std::cout << distance << std::endl;
 
 
 	}

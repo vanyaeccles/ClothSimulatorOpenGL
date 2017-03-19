@@ -366,7 +366,7 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth1(10, 10, 30, 30, structuralSprings, shearSprings, flexionSprings);
+	Cloth cloth1(10, 10, 1.0f, 30, 30, structuralSprings, shearSprings, flexionSprings);
 
 
 
@@ -442,93 +442,62 @@ int main()
 			quadModel.Draw(whiteShader);
 		}
 
+
+
+
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-
-
-		float wind1 = 10.0f * sin(glfwGetTime()); // 0.5f;
-
-		glm::vec3 wind(wind1, 0, 0.2);
-
 		cloth1.addForce(grav, timestep);
+
+		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
+		glm::vec3 wind(wind1, 0, 0.2);
 		cloth1.applyWindForce(wind, timestep);
 
-		cloth1.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+
+
+		//cloth1.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 
 
+		//DUMB AND EXPENSIVE!
 
-
-
-
-		//For updated particle in particle system
-		//  > Draw particle at its position vector
-		//for (int i = 0; i < NUM_PARTICLES; i++)
+		//for (int i = 0; i < cloth1.clothTriangles.size(); i++)
 		//{
-		//	float partX = cloth.cloParts.parti[i].position[0];
-		//	float partY = cloth.cloParts.parti[i].position[1];
-		//	float partZ = cloth.cloParts.parti[i].position[2];
+		//	GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
 
+		//	x1 = cloth1.clothTriangles[i].p1->position[0];
+		//	y1 = cloth1.clothTriangles[i].p1->position[1];
+		//	z1 = cloth1.clothTriangles[i].p1->position[2];
 
-		//	/*if (i != 1)
-		//	{*/
-		//		// DRAW Sphere for the particle
-		//		model = glm::mat4();
-		//		//Translate to position
-		//		model = glm::translate(model, glm::vec3(partX, partY, partZ));
-		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//		sphere.Draw(whiteShader);
-		//	//}	
+		//	x2 = cloth1.clothTriangles[i].p2->position[0];
+		//	y2 = cloth1.clothTriangles[i].p2->position[1];
+		//	z2 = cloth1.clothTriangles[i].p2->position[2];
+
+		//	x3 = cloth1.clothTriangles[i].p3->position[0];
+		//	y3 = cloth1.clothTriangles[i].p3->position[1];
+		//	z3 = cloth1.clothTriangles[i].p3->position[2];
+
+		//	// Set up vertex data (and buffer(s)) and attribute pointers
+		//	GLfloat vertices[] = {
+		//		x1, y1, z1, // Left  
+		//		x2, y2, z2, // Right 
+		//		x3, y3, z3  // Top   
+		//	};
+		//	GLuint VBO, VAO;
+		//	glGenVertexArrays(1, &VAO);
+		//	glGenBuffers(1, &VBO);
+		//	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+		//	glBindVertexArray(VAO);
+		//	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		//	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+		//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+		//	glEnableVertexAttribArray(0);
+		//	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+		//	glDrawArrays(GL_TRIANGLES, 0, 3);
+		//	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
 		//}
 
 
-
-
-
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//model = glm::mat4();
-		//glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//clothM.Draw(whiteShader);
-
-
-
-
-		//for (int i = 0; i < cloth.modelVertices.size(); i++)
-		//{
-
-		//	model = glm::mat4();
-
-		//	//if (i % 16 == 0)
-		//	//{
-		//	//	model = glm::translate(model, (cloth.modelVertices[i] + glm::vec3(0.0f, 1.0f, 0.0f)));
-		//	//	//std::cout << "Bingo" << std::endl;
-		//	//}
-
-		//	//if (i % 2 != 0)
-		//	//{
-		//	//	model = glm::translate(model, cloth.modelVertices[i] + glm::vec3(0.0f, 0.0f, 0.0f));
-		//	//}
-
-		//	model = glm::translate(model, cloth.modelVertices[i]);
-		//	
-		//	glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//	sphere.Draw(whiteShader);
-		//}
-
-
-		//cloth.Update(timestep);
-
-
-		//std::cout << cloth.modelVertices.size() << std::endl;
-
-		/*if (playSimulation)
-		{
-			clock++;
-
-			bool reverseGrav;
-
-			cloth.cloParts.update(timestep, true);
-
-		}*/
+		
 
 
 

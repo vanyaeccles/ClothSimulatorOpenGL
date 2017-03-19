@@ -137,6 +137,7 @@
     <ClInclude Include="RigidBody.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SweepAndPrune.h" />
+    <ClInclude Include="Triangle.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
