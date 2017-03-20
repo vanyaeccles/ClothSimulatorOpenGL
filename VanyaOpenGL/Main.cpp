@@ -366,10 +366,10 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth(10, 10, 1.0f, 30, 30, structuralSprings, shearSprings, flexionSprings);
+	Cloth cloth(10, 10, 0.1f, 30, 30, structuralSprings, shearSprings, flexionSprings);
 
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
-
+	parti.applyForce(glm::vec3(0.0f, 0.0f, -500.0f), timestep);
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -445,7 +445,7 @@ int main()
 
 
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		//cloth.addForce(grav, timestep);
+		cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
@@ -498,7 +498,7 @@ int main()
 
 		
 
-		parti.applyForce(glm::vec3(0.0f,0.0f, -5.0f), timestep);
+		
 
 		parti.verletIntegration(dampingConstant, timestep);
 

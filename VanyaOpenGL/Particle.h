@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <glm/vec3.hpp>
 #include <vector>
 
@@ -89,6 +89,12 @@ public:
 	glm::vec3 getVerletVelocity(float timestep)
 	{
 		return (position - oldPosition) / timestep;
+	}
+
+	//Compute the final positions xn+1 = xn + ∆t * vn+1/2
+	void postCollisionApplyVelocity(glm::vec3 velocity, float timestep)
+	{
+		position += timestep * velocity;
 	}
 
 

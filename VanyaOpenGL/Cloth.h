@@ -444,8 +444,10 @@ public:
 		dChecker.voronoiSingleTriangle(cpoint.getPosition(), clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
 		glm::vec3 contactPoint = dChecker.closestPoint;
 
-		if (dChecker.distance > 0.5f)
+		if (dChecker.distance > 0.2f)
 			return;
+		//else
+			//std::cout << "collision!" << std::endl;
 
 		
 		glm::vec3 contactNormal = glm::normalize(clothTri.getTriangleNormal()); //contact normal approximated as the triangle normal
@@ -463,7 +465,7 @@ public:
 
 		//'To stop the imminent collision we apply an inelastic impulse of magnitude Ic=mvN/ 2 in the normal direction'
 		glm::vec3 inelasticImpulse = clothTri.mass * vrel * contactNormal / 2.0f;
-		applyImpulse2Triangle(inelasticImpulse, clothTri, baryPoint, contactPoint, contactNormal);
+		applyImpulse2Triangle(inelasticImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 
 
 
@@ -477,13 +479,38 @@ public:
 
 		if (vrel >= overlapThreshold)
 			return;
-		else                           //Double check this normal component
+		else
+		{
+			//Double check this normal component
 			glm::vec3 springImpulse = contactNormal * -std::min((timestep * shearKs * overlap), clothTri.mass * (overlapThreshold - vrel));
+
+			applyImpulse2Triangle(springImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+
+
+			//calculate and apply friction impulse
+
+			//get the precollision relative tangential velocity, projection of the relative velocity onto the triangle
+			glm::vec3 vrelT;
+			vrelT = (pointVelocity - interpolatedTriangleVelocity) - vrel / (pow(glm::length(contactNormal), 2)) * contactNormal;
+
+			glm::vec3 interpolatedTriangleVelocityNEW = (baryPoint.x * clothTri.p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri.p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri.p3->getVerletVelocity(timestep));
+			glm::vec3 pointVelocityNEW = cpoint.getVerletVelocity(timestep);
+			GLfloat vrelNEW = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity));
+
+			GLfloat deltaVrel = vrelNEW - vrel;
+
+			float fricCoeff = 0.45f;
+			GLfloat velTerm = deltaVrel / glm::length(vrelT); //@TODO double check
+
+			glm::vec3 fricVel = std::max((1.0f - fricCoeff * velTerm), 0.0f) * vrelT;
+
+			//applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+		}
 	}
 
 
 
-	void applyImpulse2Triangle(glm::vec3 impulse, Triangle clothTri, glm::vec3 baryPoint, glm::vec3 contactPoint, glm::vec3 contactNormal)
+	void applyImpulse2Triangle(glm::vec3 impulse, Triangle clothTri, Particle parti, glm::vec3 baryPoint, glm::vec3 contactPoint, glm::vec3 contactNormal, float timestep)
 	{
 		// 'For the point-triangle case,  where an interior point of triangle~x1~x2~x3 with barycentric coordinates w1,w2,w3 
 		// is interacting with point~x4 , we compute adjusted impulses'
@@ -499,15 +526,21 @@ public:
 		clothTri.p2->velocity += (b2 * (adjustedImpulse / clothTri.mass) * contactNormal);
 		clothTri.p3->velocity += (b3 * (adjustedImpulse / clothTri.mass) * contactNormal);
 
-		//glm::vec3 pointVelocity = adjustedImpulse / pointMass * contactNormal; @TODO??
+		glm::vec3 pointVelocity = adjustedImpulse / parti.mass * contactNormal; //@TODO??
+		parti.postCollisionApplyVelocity(pointVelocity, timestep);
+
+		clothTri.p1->postCollisionApplyVelocity(clothTri.p1->velocity /** 100.0f*/, timestep);
+		clothTri.p2->postCollisionApplyVelocity(clothTri.p2->velocity /** 100.0f*/, timestep);
+		clothTri.p3->postCollisionApplyVelocity(clothTri.p3->velocity /** 100.0f*/, timestep);
 	}
 
 
 
 
 
-	//Simple check for bruteforce cloth-plane collision, inelastic
 
+
+	//Simple check for bruteforce cloth-plane collision, inelastic
 	void bruteForceParticlePlaneCollisionCheck(glm::vec3 planeNormal, glm::vec3 planePoint)
 	{
 		std::vector<Particle>::iterator parti;
