@@ -85,7 +85,7 @@ class DistanceChecker
 		else if (d == h)
 		{
 			closestP = pE;
-			std::cout << pE.x << pE.y << pE.z << endl;
+			//std::cout << pE.x << pE.y << pE.z << endl;
 		}
 			
 		//this->closestPoint = closestP;

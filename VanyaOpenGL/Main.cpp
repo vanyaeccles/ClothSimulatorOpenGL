@@ -366,9 +366,9 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth1(10, 10, 1.0f, 30, 30, structuralSprings, shearSprings, flexionSprings);
+	Cloth cloth(10, 10, 1.0f, 30, 30, structuralSprings, shearSprings, flexionSprings);
 
-
+	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
 
 
 	// Game loop
@@ -411,25 +411,17 @@ int main()
 
 		if (playSimulation)
 		{
-			cloth1.Update(dampingConstant, constraintIterations, springIterations, timestep);
+			cloth.Update(dampingConstant, constraintIterations, springIterations, timestep);
 		}
 		
 
-		int count = 0;
 
 		std::vector<Particle>::iterator particle;
-		for (particle = cloth1.particles.begin(); particle != cloth1.particles.end(); particle++)
+		for (particle = cloth.particles.begin(); particle != cloth.particles.end(); particle++)
 		{
 			float partX = (*particle).position[0];
 			float partY = (*particle).position[1];
 			float partZ = (*particle).position[2];
-
-			if ((*particle).isPinned)
-			{
-				//std::cout << "Pinned: " << count << std::endl;
-			}
-
-			count++;
 
 
 			glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), (*particle).colour[0], (*particle).colour[1], (*particle).colour[2]);
@@ -442,32 +434,37 @@ int main()
 			quadModel.Draw(whiteShader);
 		}
 
+		// DRAW Sphere for the collision particle
+		model = glm::mat4();
+		//Translate to the particles position
+		model = glm::translate(model, parti.position);
+		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		sphere.Draw(whiteShader);
+
 
 
 
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		cloth1.addForce(grav, timestep);
+		//cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
-		cloth1.applyWindForce(wind, timestep);
+		//cloth.applyWindForce(wind, timestep);
 
 
 
-		//cloth1.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+		cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 
 
 		//DUMB AND EXPENSIVE!
-
+#pragma region DRAW CLOTH WELL
 		//for (int i = 0; i < cloth1.clothTriangles.size(); i++)
 		//{
 		//	GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
-
 		//	x1 = cloth1.clothTriangles[i].p1->position[0];
 		//	y1 = cloth1.clothTriangles[i].p1->position[1];
 		//	z1 = cloth1.clothTriangles[i].p1->position[2];
-
 		//	x2 = cloth1.clothTriangles[i].p2->position[0];
 		//	y2 = cloth1.clothTriangles[i].p2->position[1];
 		//	z2 = cloth1.clothTriangles[i].p2->position[2];
@@ -495,19 +492,22 @@ int main()
 		//	glDrawArrays(GL_TRIANGLES, 0, 3);
 		//	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
 		//}
-
+#pragma endregion
 
 		
 
+		
+
+		parti.applyForce(glm::vec3(0.0f,0.0f, -5.0f), timestep);
+
+		parti.verletIntegration(dampingConstant, timestep);
 
 
 
-
-
-
-
-
-
+		for (int i = 0; i < cloth.clothTriangles.size(); i++)
+		{
+			cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
+		}
 		
 
 

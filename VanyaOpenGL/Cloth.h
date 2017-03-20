@@ -430,7 +430,7 @@ public:
 
 #pragma region COLLISION
 
-	void onBoundingBoxCollisionPoint2Tri(Triangle clothTri, glm::vec3 cpoint, float timestep)
+	void onBoundingBoxCollisionPoint2Tri(Triangle clothTri, Particle cpoint, float timestep)
 	{
 		/*
 		'Proximity is determined for both point-triangle pairs and edge-edge pairs. 
@@ -441,16 +441,26 @@ public:
 		// I inelastic repulsion
 
 		//Compute the closest point with voronoi
-		dChecker.voronoiSingleTriangle(cpoint, clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
+		dChecker.voronoiSingleTriangle(cpoint.getPosition(), clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
 		glm::vec3 contactPoint = dChecker.closestPoint;
 
-		GLfloat vrel; //@TODO
+		if (dChecker.distance > 0.5f)
+			return;
+
 		
 		glm::vec3 contactNormal = glm::normalize(clothTri.getTriangleNormal()); //contact normal approximated as the triangle normal
 
 		
 		//Gets contact point in barycentric coordinates
 		glm::vec3 baryPoint = clothTri.getBaryCentricCoordinates(contactPoint);
+
+		GLfloat vrel; //@TODO Double-Check
+		glm::vec3 interpolatedTriangleVelocity = (baryPoint.x * clothTri.p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri.p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri.p3->getVerletVelocity(timestep));
+		glm::vec3 pointVelocity = cpoint.getVerletVelocity(timestep);
+
+		vrel = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity)); 
+
+
 		//'To stop the imminent collision we apply an inelastic impulse of magnitude Ic=mvN/ 2 in the normal direction'
 		glm::vec3 inelasticImpulse = clothTri.mass * vrel * contactNormal / 2.0f;
 		applyImpulse2Triangle(inelasticImpulse, clothTri, baryPoint, contactPoint, contactNormal);
@@ -458,7 +468,7 @@ public:
 
 
 		// II 'The  spring  based  repulsion  force'
-		float overlap = clothThickness - glm::dot(cpoint - (baryPoint.x * clothTri.p1->position) - (baryPoint.y * clothTri.p2->position) - (baryPoint.z * clothTri.p3->position), contactNormal);
+		float overlap = clothThickness - glm::dot(cpoint.getPosition() - (baryPoint.x * clothTri.p1->position) - (baryPoint.y * clothTri.p2->position) - (baryPoint.z * clothTri.p3->position), contactNormal);
 
 		// 'we found that matching the stiffness of the stretch springs in the cloth gave good results'
 		glm::vec3 springRepulsionForce = shearKs * overlap * contactNormal;
