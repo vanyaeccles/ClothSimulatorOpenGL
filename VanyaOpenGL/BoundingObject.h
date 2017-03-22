@@ -30,4 +30,17 @@ struct AABoundingBox
 
 };
 
+
+struct ClothTriangleAABoundingBox
+{
+	GLfloat posX;
+	GLfloat negX;
+
+	GLfloat posY;
+	GLfloat negY;
+
+	GLfloat posZ;
+	GLfloat negZ;
+};
+
 #endif

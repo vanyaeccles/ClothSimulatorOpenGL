@@ -55,6 +55,11 @@ public:
 		return position; 
 	}
 
+	glm::vec3 getPos()
+	{
+		return position;
+	}
+
 
 
 	void applyGravityForce(glm::vec3 _force, float timestep)
@@ -79,6 +84,7 @@ public:
 		//Unless they are pinned, they can move
 		if (!isPinned)
 		{
+
 			glm::vec3 currentPosition = position;
 			position = position + (position - oldPosition) * (1.0f - dampingConstant) + acceleration * timestep;
 			oldPosition = currentPosition;
@@ -91,10 +97,14 @@ public:
 		return (position - oldPosition) / timestep;
 	}
 
+
 	//Compute the final positions xn+1 = xn + ∆t * vn+1/2
 	void postCollisionApplyVelocity(glm::vec3 velocity, float timestep)
 	{
+		std::cout << "Pos: " << glm::to_string(position) << std::endl;
+		//std::cout << " post collision velocity applied " << std::endl;
 		position += timestep * velocity;
+		std::cout << "New Pos: " << glm::to_string(position) << std::endl;
 	}
 
 
@@ -120,6 +130,12 @@ public:
 	{
 		mass = _mass;
 		massinv = 1.0f / mass;
+	}
+
+
+	void setColour(glm::vec3 col)
+	{
+		colour = col;
 	}
 	
 };

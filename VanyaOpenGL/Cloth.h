@@ -444,10 +444,14 @@ public:
 		dChecker.voronoiSingleTriangle(cpoint.getPosition(), clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
 		glm::vec3 contactPoint = dChecker.closestPoint;
 
-		if (dChecker.distance > 0.2f)
+		if (dChecker.distance > 0.02f)
 			return;
-		//else
-			//std::cout << "collision!" << std::endl;
+		else
+		{
+			std::cout << "collision!" << std::endl;
+			return;
+		}
+			
 
 		
 		glm::vec3 contactNormal = glm::normalize(clothTri.getTriangleNormal()); //contact normal approximated as the triangle normal
@@ -481,6 +485,11 @@ public:
 			return;
 		else
 		{
+			//Change the colour of the triangle hit
+			clothTri.FlagCollisionColour();
+			glm::vec3 red(1.0f, 0.0f, 0.0f);
+			cpoint.setColour(glm::vec3(1.0f, 0.0f, 0.0f));
+
 			//Double check this normal component
 			glm::vec3 springImpulse = contactNormal * -std::min((timestep * shearKs * overlap), clothTri.mass * (overlapThreshold - vrel));
 

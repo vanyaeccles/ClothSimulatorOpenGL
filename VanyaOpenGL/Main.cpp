@@ -366,10 +366,10 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth(10, 10, 0.1f, 30, 30, structuralSprings, shearSprings, flexionSprings);
+	Cloth cloth(10, 10, 0.1f, 2, 2, structuralSprings, shearSprings, flexionSprings);
 
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
-	parti.applyForce(glm::vec3(0.0f, 0.0f, -500.0f), timestep);
+	parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -412,6 +412,14 @@ int main()
 		if (playSimulation)
 		{
 			cloth.Update(dampingConstant, constraintIterations, springIterations, timestep);
+
+			// Particle
+			parti.verletIntegration(dampingConstant, timestep);
+
+			for (int i = 0; i < cloth.clothTriangles.size(); i++)
+			{
+				cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
+			}
 		}
 		
 
@@ -438,14 +446,37 @@ int main()
 		model = glm::mat4();
 		//Translate to the particles position
 		model = glm::translate(model, parti.position);
+		//glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), parti.colour[0], parti.colour[1], parti.colour[2]);
+		//std::cout << "Colour: " << glm::to_string(parti.colour) << std::endl;
 		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		sphere.Draw(whiteShader);
+
+		for (int i = 0; i < cloth.clothTriangles.size(); i++)
+		{
+			cloth.clothTriangles[i].GetBoundingBox();
+			
+			//Draw bounding box
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			boundboxShader.Use();
+			glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			model = glm::mat4();
+			model = glm::translate(model,cloth.clothTriangles[i].getTriangleCenterPos());
+			model = glm::scale(model, glm::vec3(cloth.clothTriangles[i].xDist, cloth.clothTriangles[i].yDist, cloth.clothTriangles[i].zDist));
+			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
+			cube.Draw(boundboxShader);
+		}
+
+
+		
 
 
 
 
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		cloth.addForce(grav, timestep);
+		//cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
@@ -458,6 +489,7 @@ int main()
 
 
 		//DUMB AND EXPENSIVE!
+
 #pragma region DRAW CLOTH WELL
 		//for (int i = 0; i < cloth1.clothTriangles.size(); i++)
 		//{
@@ -500,14 +532,7 @@ int main()
 
 		
 
-		parti.verletIntegration(dampingConstant, timestep);
-
-
-
-		for (int i = 0; i < cloth.clothTriangles.size(); i++)
-		{
-			cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
-		}
+		
 		
 
 
@@ -551,7 +576,7 @@ int main()
 		// skybox cube
 		glBindVertexArray(skyboxVAO);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		glDepthFunc(GL_LESS); // Set depth function back to default
 		
