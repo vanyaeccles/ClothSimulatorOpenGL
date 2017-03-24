@@ -92,9 +92,8 @@ bool rightFan = false;
 bool movePos = false;
 bool playForces = false;
 bool rotateRT = true;
-bool boundS = false;
-bool boundB = false;
-bool bruteFB = false;
+bool boundBox = false;
+
 
 bool applyVec = false;
 //bool applyVec2 = false;
@@ -146,8 +145,6 @@ glm::vec3 Jforce(0.0f, 0.0f, 0.0f);
 
 
 #pragma endregion
-
-
 
 
 
@@ -366,7 +363,7 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth(10, 10, 0.1f, 2, 2, structuralSprings, shearSprings, flexionSprings);
+	Cloth cloth(10, 10, 0.1f, 30, 30, structuralSprings, shearSprings, flexionSprings, 2);
 
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
 	parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
@@ -416,10 +413,10 @@ int main()
 			// Particle
 			parti.verletIntegration(dampingConstant, timestep);
 
-			for (int i = 0; i < cloth.clothTriangles.size(); i++)
-			{
-				cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
-			}
+			//for (int i = 0; i < cloth.clothTriangles.size(); i++)
+			//{
+			//	cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
+			//}
 		}
 		
 
@@ -451,40 +448,58 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		sphere.Draw(whiteShader);
 
-		for (int i = 0; i < cloth.clothTriangles.size(); i++)
+
+
+		if (boundBox)
 		{
-			cloth.clothTriangles[i].GetBoundingBox();
-			
-			//Draw bounding box
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			boundboxShader.Use();
-			glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-			model = glm::mat4();
-			model = glm::translate(model,cloth.clothTriangles[i].getTriangleCenterPos());
-			model = glm::scale(model, glm::vec3(cloth.clothTriangles[i].xDist, cloth.clothTriangles[i].yDist, cloth.clothTriangles[i].zDist));
-			glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-			glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
-			cube.Draw(boundboxShader);
+			for (int i = 0; i < cloth.clothTriangles.size(); i++)
+			{
+				cloth.clothTriangles[i].GetBoundingBox();
+
+				//Draw bounding box
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				boundboxShader.Use();
+				glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+				model = glm::mat4();
+				model = glm::translate(model, cloth.clothTriangles[i].getTriangleUpperCenter());
+				model = glm::scale(model, glm::vec3(cloth.clothTriangles[i].xDist, cloth.clothTriangles[i].yDist, cloth.clothTriangles[i].zDist));
+				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+				glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
+				cube.Draw(boundboxShader);
+			}
+		}
+		
+		if (!boundBox)
+		{
+			cloth.BuildAABBVH(cloth.rootNode, cloth.clothTriangles, 2);
+			boundBox = true;
 		}
 
-
 		
-
+		
+		//cloth.CheckBVH(cloth.rootNode, parti, timestep); //@TODO
 
 
 
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		//cloth.addForce(grav, timestep);
+		cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
-		//cloth.applyWindForce(wind, timestep);
+		cloth.applyWindForce(wind, timestep);
 
 
 
 		cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+
+
+
+
+
+
+
 
 
 
@@ -576,7 +591,7 @@ int main()
 		// skybox cube
 		glBindVertexArray(skyboxVAO);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 		glBindVertexArray(0);
 		glDepthFunc(GL_LESS); // Set depth function back to default
 		
@@ -792,13 +807,10 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 		playSimulation = !playSimulation;
 
+
+	if (key == GLFW_KEY_B && action == GLFW_PRESS)
+		boundBox = !boundBox;
 	
-	if (key == GLFW_KEY_R && action == GLFW_PRESS)
-		boundS = !boundS;
-	if (key == GLFW_KEY_T && action == GLFW_PRESS)
-		boundB = !boundB;
-	if (key == GLFW_KEY_Y && action == GLFW_PRESS)
-		bruteFB = !bruteFB;
 
 
 	if (key == GLFW_KEY_O && action == GLFW_PRESS)
@@ -826,8 +838,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	if (key == GLFW_KEY_M && action == GLFW_PRESS)
 		angVec -= glm::vec3(0.5f, 0.5f, 0.0f);
 
-	if (key == GLFW_KEY_B && action == GLFW_PRESS)
-		drawBody = !drawBody;
 
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)
 		applyVec = !applyVec;

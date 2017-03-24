@@ -5,6 +5,7 @@
 #include "ParticleConstraint.h"
 #include "ParticleSpring.h"
 #include "Triangle.h"
+#include "BoundingVolumeHierarchy.h"
 
 #include "DistanceChecks.h"
 
@@ -41,6 +42,9 @@ public:
 	float k_R = 0.0f;
 	GLfloat coResFactor = 1.0f + k_R;
 
+	// Bounding Volume Hierarchy
+	Node rootNode;
+
 
 	// Cloth contents
 	std::vector<Particle> particles;
@@ -69,14 +73,14 @@ public:
 		particleSprings.push_back(ParticleSpring(p1, p2, _Ks, _Kd, _springType));
 	}
 	
-	void makeTriangle(Particle* p1, Particle* p2, Particle* p3)
+	void makeTriangle(Particle* p1, Particle* p2, Particle* p3, Particle* p4)
 	{
-		clothTriangles.push_back(Triangle(p1, p2, p3));
+		clothTriangles.push_back(Triangle(p1, p2, p3, p4));
 	}
 
 
 
-	Cloth(float width, float height, float _clothThickness, int particleWidthNumber, int particleHeightNumber, bool _structural, bool _shear, bool _flexion) 
+	Cloth(float width, float height, float _clothThickness, int particleWidthNumber, int particleHeightNumber, bool _structural, bool _shear, bool _flexion, int threshBVH)
 	: clothThickness(_clothThickness), gridWidth(particleWidthNumber), gridHeight(particleHeightNumber), width(width), height(height), structural(_structural), shear(_shear), flexion(_flexion)
 	{
 		//initialise the size of the cloth grid
@@ -97,7 +101,11 @@ public:
 
 		pinCloth();
 
+		// Builds a BVH of AABBs
+		BuildAABBVH(rootNode, this->clothTriangles, threshBVH);
 	}
+
+
 
 	// This creates and fills the grid with particles
 	void initialiseParticleGrid()
@@ -124,6 +132,202 @@ public:
 			}
 		}
 	}
+
+
+
+
+#pragma region "BOUNDING_VOL_HIERARCHY"
+
+	
+
+	void CheckBVH(Node node, Particle p, float timestep)
+	{
+
+		// check for intersection
+		//if (!Point2AABBIntersectionTest(p.position, node.boundingVolume))
+			//return;
+		
+		std::cout << "BB colision" << std::endl;
+
+		// if the node is a leaf, check all the triangles for collision
+		if (node.leaf)
+		{
+			for (int i = 0; i < node.nodeTriangles.size(); i++)
+				onBoundingBoxCollisionPoint2Tri(node.nodeTriangles[i], p, timestep);
+			std::cout << "Leaf Node" << std::endl;
+			return;
+		}
+
+		Node left = *node.leftChild;
+		Node right = *node.rightChild;
+
+		CheckBVH(left, p, timestep);
+		CheckBVH(right, p, timestep); 
+
+		/*CheckBVH(*node.leftChild, p, timestep);
+		CheckBVH(*node.rightChild, p, timestep);*/
+	}
+
+
+	bool Point2AABBIntersectionTest(glm::vec3 point, AABB box)
+	{
+		bool xIntersect = (point.x >= box.negX && point.x <= box.posX);
+		bool yIntersect = (point.y >= box.negY && point.y <= box.posY);
+		bool zIntersect = (point.z >= box.negZ && point.z <= box.posZ);
+
+		if (xIntersect && yIntersect && zIntersect)
+			return true;
+		else
+			return false;
+	}
+
+	int i = 0;
+
+	// builds the bounding box hierarchy
+	void BuildAABBVH(Node node, std::vector<Triangle> triangles, int threshold)
+	{
+
+		GLfloat MinX = triangles[0].minX, MaxX = triangles[0].maxX, MinY = triangles[0].minY, MaxY = triangles[0].maxY, MinZ = triangles[0].minZ, MaxZ = triangles[0].maxZ;
+
+		//Get the min and maxs of the bounding boxes
+		for (int i = 1; i < triangles.size(); i++)
+		{
+			//glm::vec3 cenTri = triangles[i].getTriangleUpperCenter();
+
+			if (triangles[i].minX < MinX) MinX = triangles[i].minX;
+			if (triangles[i].minY < MinY) MinY = triangles[i].minY;
+			if (triangles[i].minZ < MinZ) MinZ = triangles[i].minZ;
+			if (triangles[i].maxX > MaxX) MaxX = triangles[i].maxX;
+			if (triangles[i].maxY > MaxY) MaxY = triangles[i].maxY;
+			if (triangles[i].maxZ > MaxZ) MaxZ = triangles[i].maxZ;
+		}
+
+		//std::cout << "It: " << i << std::endl;
+		//i++;
+
+		//std::cout << triangles.size() << std::endl;
+
+		//this nodes AABB is calculated and stored
+		node.setNodeBoundingVolume(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
+
+		//Check if its small enough to be leaf, and then assign the remaining triangles to its object list
+		if (triangles.size() < threshold)
+		{
+			node.setLeaf(triangles);
+			return;
+		}
+			
+
+
+		// sorts the objects 
+		triangles = sortObjectsAlongLongestAxis(triangles);
+		//split the sorted list into two lists
+		std::vector<Triangle> rightObjects = splitRightObjects(triangles);
+		std::vector<Triangle> leftObjects = splitLeftObjects(triangles);
+		//std::cout << "left is " << leftObjects.size() << std::endl;
+		//std::cout << "right is " << rightObjects.size() << std::endl;
+
+		
+
+		node.leftChild = new Node();
+		node.rightChild = new Node();
+
+		if (leftObjects.size() > threshold)
+			BuildAABBVH(*node.leftChild, leftObjects, threshold);
+		if (rightObjects.size() > threshold)
+			BuildAABBVH(*node.rightChild, rightObjects, threshold);
+	}
+
+
+	std::vector<Triangle> sortObjectsAlongLongestAxis(std::vector<Triangle> triangles) //@TODO double check
+	{
+		GLfloat minX = triangles[0].minX, maxX = triangles[0].maxX, minY = triangles[0].minY, maxY = triangles[0].maxY, minZ = triangles[0].minZ, maxZ = triangles[0].maxZ;
+
+
+
+		//gets the mins/maxs out of all the triangles (based on their upper center) in the vector
+		for (int i = 1; i < triangles.size(); i++)
+		{
+			glm::vec3 cenTri = triangles[i].getTriangleUpperCenter();
+
+			if (cenTri.x < minX) minX = cenTri.x;
+			if (cenTri.y < minY) minY = cenTri.y;
+			if (cenTri.z < minZ) minZ = cenTri.z;
+			if (cenTri.x > maxX) maxX = cenTri.x;
+			if (cenTri.y > maxY) maxY = cenTri.y;
+			if (cenTri.z > maxZ) maxZ = cenTri.z;
+		}
+
+		GLfloat xDis = glm::length(maxX - minX);
+		GLfloat yDis = glm::length(maxY - minY);
+		GLfloat zDis = glm::length(maxZ - minZ);
+
+		if (xDis >= yDis && xDis >= zDis)
+		{
+			//sort on x
+			for (int i = 1; i < triangles.size(); ++i) {
+				for (int j = i; j > 0 && triangles[j - 1].upperCenter.x > triangles[j].upperCenter.x; --j) {
+					std::swap(triangles[j - 1], triangles[j]);
+				}
+			}
+			return triangles;
+		}
+
+		if (yDis >= xDis && yDis >= zDis)
+		{
+			//sort on y
+			for (int i = 1; i < triangles.size(); ++i) {
+				for (int j = i; j > 0 && triangles[j - 1].upperCenter.y > triangles[j].upperCenter.y; --j) {
+					std::swap(triangles[j - 1], triangles[j]);
+				}
+			}
+			return triangles;
+		}
+
+		if (zDis >= xDis && zDis >= yDis) 
+		{
+			//sort on z
+			for (int i = 1; i < triangles.size(); ++i) {
+				for (int j = i; j > 0 && triangles[j - 1].upperCenter.z > triangles[j].upperCenter.z; --j) {
+					std::swap(triangles[j - 1], triangles[j]);
+				}
+			}
+			return triangles;
+		}
+	}
+
+	
+
+	std::vector<Triangle> splitLeftObjects(std::vector<Triangle> triangles)
+	{
+		int midPoint = triangles.size() * 0.5f;
+		std::vector<Triangle> leftTriangles;
+		leftTriangles.clear();
+
+		for (int i = 0; i < midPoint; i++)
+		{
+			leftTriangles.push_back(triangles[i]);
+		}
+
+		return leftTriangles;
+	}
+
+	std::vector<Triangle> splitRightObjects(std::vector<Triangle> triangles)
+	{
+		int midPoint = triangles.size() * 0.5f;
+		std::vector<Triangle> rightTriangles;
+		rightTriangles.clear();
+
+		for (int i = triangles.size() - 1; i > midPoint; i--)
+		{
+			rightTriangles.push_back(triangles[i]);
+		}
+
+		return rightTriangles;
+	}
+
+#pragma endregion
+
 
 
 #pragma region CONSTRAINTS
@@ -355,8 +559,8 @@ public:
 		{
 			for (int y = 0; y < gridHeight - 1; y++)
 			{
-				makeTriangle(getParticle(x + 1, y), getParticle(x, y), getParticle(x, y + 1));
-				makeTriangle(getParticle(x + 1, y + 1), getParticle(x + 1, y), getParticle(x, y + 1));
+				makeTriangle(getParticle(x + 1, y), getParticle(x, y), getParticle(x, y + 1), getParticle(x + 1, y + 1));
+				makeTriangle(getParticle(x + 1, y + 1), getParticle(x + 1, y), getParticle(x, y + 1), getParticle(x, y));
 			}
 		}
 	}

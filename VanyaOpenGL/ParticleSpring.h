@@ -38,7 +38,6 @@ public:
 
 		glm::vec3 differenceVector = (p1Pos - p2Pos);
 		restLength = sqrt(glm::dot(differenceVector, differenceVector));
-
 	}
 
 

@@ -123,6 +123,7 @@
   <ItemGroup>
     <ClInclude Include="BookKeeping.h" />
     <ClInclude Include="BoundingObject.h" />
+    <ClInclude Include="BoundingVolumeHierarchy.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Cloth.h" />
     <ClInclude Include="ClothSystem.h" />

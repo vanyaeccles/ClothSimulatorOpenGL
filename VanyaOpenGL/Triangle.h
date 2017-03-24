@@ -10,13 +10,17 @@ public:
 
 	Particle *p1, *p2, *p3;
 
+	Particle *fourthCornerP;
+
 	glm::vec3 centerPos;
+	//The center of the square 
+	glm::vec3 upperCenter;
 	glm::vec3 normal;
 
 	float mass;
 
 
-	ClothTriangleAABoundingBox bBox;
+	AABB bBox;
 	GLfloat minX, minY, minZ, maxX, maxY, maxZ, xDist, yDist, zDist = 0.0f;
 
 
@@ -27,7 +31,7 @@ public:
 	bool isColliding;
 
 
-	Triangle(Particle *_p1, Particle *_p2, Particle *_p3) : p1(_p1), p2(_p2), p3(_p3)
+	Triangle(Particle *_p1, Particle *_p2, Particle *_p3, Particle *_p4) : p1(_p1), p2(_p2), p3(_p3), fourthCornerP(_p4)
 	{
 		normal = getTriangleNormal();
 
@@ -65,6 +69,60 @@ public:
 
 		return midPoint;
 	}
+
+	//Gets the center for the bounding box
+	glm::vec3 getTriangleUpperCenterOLD()
+	{
+		glm::vec3 pos1 = p1->position;
+		glm::vec3 pos2 = p2->position;
+		glm::vec3 pos3 = p3->position;
+
+		GLfloat ab = glm::length(pos1 - pos2);
+		GLfloat bc = glm::length(pos2 - pos3);
+		GLfloat ac = glm::length(pos1 - pos3);
+
+		glm::vec3 center;
+
+		if (ab >= bc && ab >= ac)
+		{
+			center = pos1 + pos2 - (pos3 * 0.5f);
+		}
+
+		if (bc >= ab && bc >= ac)
+		{
+			center = pos3 + pos2 - (pos1 * 0.5f);
+		}
+
+		if (ac >= ab && ac >= bc) 
+		{
+			center = pos3 + pos1 - (pos2 * 0.5f);
+		}
+
+		return center;
+	}
+
+	//Gets the center of the bounding box
+	glm::vec3 getTriangleUpperCenter()
+	{
+		glm::vec3 pos1 = p1->position;
+		glm::vec3 pos2 = p2->position;
+		glm::vec3 pos3 = p3->position;
+		glm::vec3 pos4 = fourthCornerP->position;
+
+		glm::vec3 midPoint(0, 0, 0);
+		midPoint = pos1 + pos2 + pos3 + pos4;
+
+		//Get the mean of the points
+		midPoint /= 4.0f;
+
+		centerPos = midPoint;
+
+		upperCenter = midPoint;
+		return midPoint;
+	}
+
+
+
 
 	glm::vec3 getTriangleNormal()
 	{
@@ -121,7 +179,14 @@ public:
 		glm::vec3 pos2 = p2->getPosition();
 		glm::vec3 pos3 = p3->getPosition();
 
-		minX = centerPos.x - 0.005f, maxX = centerPos.x + 0.005f, minY = centerPos.y - 0.005f, maxY = centerPos.y + 0.005f, minZ = centerPos.z - 0.005f, maxZ = centerPos.z + 0.005f;
+		//minX = centerPos.x - 0.005f, maxX = centerPos.x + 0.005f, minY = centerPos.y - 0.005f, maxY = centerPos.y + 0.005f, minZ = centerPos.z - 0.005f, maxZ = centerPos.z + 0.005f;
+
+		minX = pos1.x - 0.01f;
+		maxX = pos1.x + 0.01f;
+		minY = pos1.y - 0.01f;
+		maxY = pos1.y + 0.01f;
+		minZ = pos1.z - 0.01f;
+		maxZ = pos1.z + 0.01f;
 
 		//std::cout << "pos1 " << glm::to_string(pos1) << std::endl;
 		//std::cout << "pos2 " << glm::to_string(pos2) << std::endl;
@@ -135,12 +200,12 @@ public:
 		//std::cout << "xMax " << maxX << std::endl;
 		//std::cout << "xMin " << minX << std::endl;
 
-		/*bBox.posX = centerPos.x + maxX + 0.1f;
-		bBox.negX = centerPos.x + minX + 0.1f;
-		bBox.posY = centerPos.y + maxY + 0.1f;
-		bBox.negY = centerPos.y + minY + 0.1f;
-		bBox.posZ = centerPos.z + maxZ + 0.1f;
-		bBox.negZ = centerPos.z + minZ + 0.1f;*/
+		bBox.posX = /*centerPos.x + */maxX;
+		bBox.negX = /*centerPos.x + */minX;
+		bBox.posY = /*centerPos.y + */maxY;
+		bBox.negY = /*centerPos.y + */minY;
+		bBox.posZ = /*centerPos.z + */maxZ;
+		bBox.negZ = /*centerPos.z + */minZ;
 
 		xDist = glm::abs(minX - maxX);
 		yDist = glm::abs(minY - maxY);
@@ -154,12 +219,12 @@ public:
 		GLfloat vPy = glm::normalize(vertexPos.y);
 		GLfloat vPz = glm::normalize(vertexPos.z);*/
 
-		if (vertexPos.x < minX) minX = vertexPos.x;// -0.1f;
-		if (vertexPos.y < minY) minY = vertexPos.y;// -0.1f;
-		if (vertexPos.z < minZ) minZ = vertexPos.z;// -0.1f;
-		if (vertexPos.x > maxX) maxX = vertexPos.x;// +0.1f;
-		if (vertexPos.y > maxY) maxY = vertexPos.y;// +0.1f;
-		if (vertexPos.z > maxZ) maxZ = vertexPos.z;// +0.1f;
+		if (vertexPos.x < minX) minX = vertexPos.x -0.1f;
+		if (vertexPos.y < minY) minY = vertexPos.y -0.1f;
+		if (vertexPos.z < minZ) minZ = vertexPos.z -0.1f;
+		if (vertexPos.x > maxX) maxX = vertexPos.x +0.1f;
+		if (vertexPos.y > maxY) maxY = vertexPos.y +0.1f;
+		if (vertexPos.z > maxZ) maxZ = vertexPos.z +0.1f;
 
 		//minX = 0;
 		//minY = 0;
