@@ -15,7 +15,7 @@ class Node
 
 public:
 
-	bool leaf = false;
+	bool leaf;
 
 	//a node has a bounding volume that is large enough to enclose all of the objects that are inside this or the children of this node
 	AABB boundingVolume;
@@ -32,17 +32,18 @@ public:
 
 	}
 
-	Node(int i)
+	/*Node(int i)
 	{
 		leftChild = new Node();
 		rightChild = new Node();
-	}
+	}*/
 
 
 	void setLeaf(std::vector<Triangle> triangles)
 	{
-		leaf = true;
-		nodeTriangles = triangles;
+		//std::cout << "Set as leaf" << std::endl;
+		this->leaf = true;
+		this->nodeTriangles = triangles;
 	}
 
 	void setNodeBoundingVolume(GLfloat MinX, GLfloat MaxX, GLfloat MinY, GLfloat MaxY, GLfloat MinZ, GLfloat MaxZ)
@@ -60,15 +61,5 @@ public:
 	void addChild(Node* child);
 
 	void removeFromParent();
-
-	
-	AABB calculateBoundingBox(); // Axis-aligned bounding box
-
-private:
-
-	glm::vec3  m_positionRelativeToParentNode;
-
-	glm::mat4 m_transformation;
-
 
 };

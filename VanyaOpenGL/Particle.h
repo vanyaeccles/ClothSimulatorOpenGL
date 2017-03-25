@@ -78,6 +78,12 @@ public:
 		acceleration += _force * massinv * timestep;
 	}
 
+	void applyImpulseForce(glm::vec3 _force)
+	{
+		//std::cout << "Impulse Force: " << glm::to_string(_force) << std::endl;
+		this->acceleration += _force * massinv;
+	}
+
 
 	void verletIntegration(float dampingConstant, float timestep)
 	{
@@ -101,11 +107,12 @@ public:
 	//Compute the final positions xn+1 = xn + ∆t * vn+1/2
 	void postCollisionApplyVelocity(glm::vec3 velocity, float timestep)
 	{
-		std::cout << "Pos: " << glm::to_string(position) << std::endl;
+		//std::cout << "Pos: " << glm::to_string(position) << std::endl;
 		//std::cout << " post collision velocity applied " << std::endl;
 		position += timestep * velocity;
-		std::cout << "New Pos: " << glm::to_string(position) << std::endl;
+		//std::cout << "New Pos: " << glm::to_string(position) << std::endl;
 	}
+
 
 
 	void zeroAcceleration()
@@ -135,7 +142,7 @@ public:
 
 	void setColour(glm::vec3 col)
 	{
-		colour = col;
+		this->colour = col;
 	}
 	
 };

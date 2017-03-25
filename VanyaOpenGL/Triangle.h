@@ -18,7 +18,8 @@ public:
 	glm::vec3 normal;
 
 	float mass;
-
+	float massinv;
+	int id;
 
 	AABB bBox;
 	GLfloat minX, minY, minZ, maxX, maxY, maxZ, xDist, yDist, zDist = 0.0f;
@@ -31,13 +32,13 @@ public:
 	bool isColliding;
 
 
-	Triangle(Particle *_p1, Particle *_p2, Particle *_p3, Particle *_p4) : p1(_p1), p2(_p2), p3(_p3), fourthCornerP(_p4)
+	Triangle(Particle *_p1, Particle *_p2, Particle *_p3, Particle *_p4, int _id) : p1(_p1), p2(_p2), p3(_p3), fourthCornerP(_p4), id(_id)
 	{
 		normal = getTriangleNormal();
 
 		mass = p1->mass + p2->mass + p3->mass;
 
-		
+		massinv = 1 / mass;
 	}
 
 
@@ -139,6 +140,8 @@ public:
 	//Adapted from Christer Ericson's Real-Time Collision Detection via http://gamedev.stackexchange.com/questions/23743/whats-the-most-efficient-way-to-find-barycentric-coordinates
 	glm::vec3 getBaryCentricCoordinates(glm::vec3 point)
 	{
+		//std::cout << glm::to_string(point) << std::endl;
+
 		glm::vec3 bary;
 
 		glm::vec3 v0 = p2->position - p1->position;
@@ -157,6 +160,7 @@ public:
 		float w = (d00 * d21 - d01 * d20) / denom;
 		float u = 1.0f - v - w;
 
+		bary = glm::vec3(u, v, w);
 
 		return bary;
 	}

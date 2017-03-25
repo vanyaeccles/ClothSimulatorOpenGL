@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 
 #include "Particle.h"
@@ -44,7 +44,7 @@ public:
 
 	// Bounding Volume Hierarchy
 	Node rootNode;
-
+	std::vector<Node> ClothNodes;
 
 	// Cloth contents
 	std::vector<Particle> particles;
@@ -72,27 +72,27 @@ public:
 	{
 		particleSprings.push_back(ParticleSpring(p1, p2, _Ks, _Kd, _springType));
 	}
-	
-	void makeTriangle(Particle* p1, Particle* p2, Particle* p3, Particle* p4)
+
+	void makeTriangle(Particle* p1, Particle* p2, Particle* p3, Particle* p4, int id)
 	{
-		clothTriangles.push_back(Triangle(p1, p2, p3, p4));
+		clothTriangles.push_back(Triangle(p1, p2, p3, p4, id));
 	}
 
 
 
 	Cloth(float width, float height, float _clothThickness, int particleWidthNumber, int particleHeightNumber, bool _structural, bool _shear, bool _flexion, int threshBVH)
-	: clothThickness(_clothThickness), gridWidth(particleWidthNumber), gridHeight(particleHeightNumber), width(width), height(height), structural(_structural), shear(_shear), flexion(_flexion)
+		: clothThickness(_clothThickness), gridWidth(particleWidthNumber), gridHeight(particleHeightNumber), width(width), height(height), structural(_structural), shear(_shear), flexion(_flexion)
 	{
 		//initialise the size of the cloth grid
 		gridWidth = particleWidthNumber;
 		gridHeight = particleHeightNumber;
 
-		
+
 		initialiseParticleGrid();
 
-		//addConstraints(structural, shear, flexion);
+		addConstraints(structural, shear, flexion);
 
-		addSprings(structural, shear, flexion);
+		//addSprings(structural, shear, flexion);
 
 		//initialiseParticleSecondaryConstraints();
 
@@ -102,7 +102,7 @@ public:
 		pinCloth();
 
 		// Builds a BVH of AABBs
-		BuildAABBVH(rootNode, this->clothTriangles, threshBVH);
+		//BuildAABBVH(rootNode, this->clothTriangles, threshBVH);
 	}
 
 
@@ -138,31 +138,31 @@ public:
 
 #pragma region "BOUNDING_VOL_HIERARCHY"
 
-	
 
-	void CheckBVH(Node node, Particle p, float timestep)
+
+	void CheckBVH(Node *node, Particle *p, float timestep)
 	{
 
 		// check for intersection
 		//if (!Point2AABBIntersectionTest(p.position, node.boundingVolume))
 			//return;
-		
+
 		std::cout << "BB colision" << std::endl;
 
 		// if the node is a leaf, check all the triangles for collision
-		if (node.leaf)
+		if (node->leaf)
 		{
-			for (int i = 0; i < node.nodeTriangles.size(); i++)
-				onBoundingBoxCollisionPoint2Tri(node.nodeTriangles[i], p, timestep);
+			for (int i = 0; i < node->nodeTriangles.size(); i++)
+				onBoundingBoxCollisionPoint2Tri(&node->nodeTriangles[i], p, timestep);
 			std::cout << "Leaf Node" << std::endl;
 			return;
 		}
 
-		Node left = *node.leftChild;
-		Node right = *node.rightChild;
+		Node *left = node->leftChild;
+		Node *right = node->rightChild;
 
 		CheckBVH(left, p, timestep);
-		CheckBVH(right, p, timestep); 
+		CheckBVH(right, p, timestep);
 
 		/*CheckBVH(*node.leftChild, p, timestep);
 		CheckBVH(*node.rightChild, p, timestep);*/
@@ -211,13 +211,14 @@ public:
 		node.setNodeBoundingVolume(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
 
 		//Check if its small enough to be leaf, and then assign the remaining triangles to its object list
-		if (triangles.size() < threshold)
+		if (triangles.size() <= threshold)
 		{
+			//std::cout << "Set as leaf" << std::endl;
 			node.setLeaf(triangles);
 			return;
 		}
-			
 
+		//std::cout << triangles.size() << std::endl;
 
 		// sorts the objects 
 		triangles = sortObjectsAlongLongestAxis(triangles);
@@ -227,15 +228,25 @@ public:
 		//std::cout << "left is " << leftObjects.size() << std::endl;
 		//std::cout << "right is " << rightObjects.size() << std::endl;
 
-		
+
 
 		node.leftChild = new Node();
 		node.rightChild = new Node();
 
-		if (leftObjects.size() > threshold)
+		if (leftObjects.size() >= threshold)
+		{
 			BuildAABBVH(*node.leftChild, leftObjects, threshold);
-		if (rightObjects.size() > threshold)
+			//std::cout << "Leftie" << std::endl;
+		}
+
+		if (rightObjects.size() >= threshold)
+		{
 			BuildAABBVH(*node.rightChild, rightObjects, threshold);
+			//std::cout << "Rightie" << std::endl;
+		}
+
+
+		ClothNodes.push_back(node);
 	}
 
 
@@ -284,7 +295,7 @@ public:
 			return triangles;
 		}
 
-		if (zDis >= xDis && zDis >= yDis) 
+		if (zDis >= xDis && zDis >= yDis)
 		{
 			//sort on z
 			for (int i = 1; i < triangles.size(); ++i) {
@@ -296,7 +307,7 @@ public:
 		}
 	}
 
-	
+
 
 	std::vector<Triangle> splitLeftObjects(std::vector<Triangle> triangles)
 	{
@@ -368,7 +379,7 @@ public:
 				}
 
 				if (shearConstraints)
-				{ 
+				{
 					// masses [i,j]--[i+1, j+1], [i+1, j]--[i, j+1]
 					/*if (i < particleGridWidth - 1)
 						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1));
@@ -381,9 +392,9 @@ public:
 						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1), shearS);
 						constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1), shearS);
 
-						
+
 					}
-						
+
 
 					//if (i < particleGridWidth - 1 && j < particleGridHeight - 1)
 					//	constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1));
@@ -441,7 +452,7 @@ public:
 
 
 	void initialiseParticleSecondaryConstraints()
-	{	
+	{
 		// Connect secondary NESW neighbours with a distance constraint (distance 2 and sqrt(4) in the grid)
 		for (int i = 0; i < gridWidth; i++)
 		{
@@ -456,7 +467,7 @@ public:
 				if (i < gridWidth - 2 && j < gridHeight - 2)
 					constrainParticles(getParticle(i, j), getParticle(i + 2, j + 2), structuralS);
 
-				if (i < gridWidth - 2 && j < gridHeight - 2)						
+				if (i < gridWidth - 2 && j < gridHeight - 2)
 					constrainParticles(getParticle(i + 2, j), getParticle(i, j + 2), structuralS);
 			}
 		}
@@ -468,9 +479,9 @@ public:
 
 #pragma region SPRINGS
 
-	/* 
-	'In our basic model, particles are arranged in a rectangular array with structural springs connecting immediate neighbors.  
-	Diagonal springs provide shear support, 
+	/*
+	'In our basic model, particles are arranged in a rectangular array with structural springs connecting immediate neighbors.
+	Diagonal springs provide shear support,
 	and springs connected to every other node (with a stabilization spring attached to the center node in between) resist bending's
 	*/
 
@@ -559,8 +570,8 @@ public:
 		{
 			for (int y = 0; y < gridHeight - 1; y++)
 			{
-				makeTriangle(getParticle(x + 1, y), getParticle(x, y), getParticle(x, y + 1), getParticle(x + 1, y + 1));
-				makeTriangle(getParticle(x + 1, y + 1), getParticle(x + 1, y), getParticle(x, y + 1), getParticle(x, y));
+				makeTriangle(getParticle(x + 1, y), getParticle(x, y), getParticle(x, y + 1), getParticle(x + 1, y + 1), x + y);
+				makeTriangle(getParticle(x + 1, y + 1), getParticle(x + 1, y), getParticle(x, y + 1), getParticle(x, y), x + y);
 			}
 		}
 	}
@@ -596,13 +607,13 @@ public:
 	void Update(float dampingConstant, int constraintIterations, int springIterations, float timestep)
 	{
 
-		//satisfyConstraints(constraintIterations);
+		satisfyConstraints(constraintIterations);
 
-		satisfySprings(springIterations, timestep);
+		//satisfySprings(springIterations, timestep);
 
 
 		verletIntegrations(dampingConstant, timestep);
-		
+
 	}
 
 
@@ -634,81 +645,119 @@ public:
 
 #pragma region COLLISION
 
-	void onBoundingBoxCollisionPoint2Tri(Triangle clothTri, Particle cpoint, float timestep)
+	void onBoundingBoxCollisionPoint2Tri(Triangle *clothTri, Particle *cpoint, float timestep)
 	{
+		dChecker.ResetChecker();
+
 		/*
-		'Proximity is determined for both point-triangle pairs and edge-edge pairs. 
-		If a pair is close enough, then two kinds of repul-sion forces are applied.  
+		'Proximity is determined for both point-triangle pairs and edge-edge pairs.
+		If a pair is close enough, then two kinds of repul-sion forces are applied.
 		The first is based on an inelastic collision, and the second is a spring based force'
 		*/
 
 		// I inelastic repulsion
 
 		//Compute the closest point with voronoi
-		dChecker.voronoiSingleTriangle(cpoint.getPosition(), clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
+		//dChecker.voronoiSingleTriangle(cpoint.position, clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
+		dChecker.voronoiSingleTriangle(cpoint->position, clothTri->p1->position, clothTri->p2->position, clothTri->p3->position);
 		glm::vec3 contactPoint = dChecker.closestPoint;
 
-		if (dChecker.distance > 0.02f)
-			return;
-		else
+
+		if (glm::abs(dChecker.distance) > 0.2f || glm::abs(dChecker.distance) == 0.0000f) //for some reason the returned distance is 0 on the first few checks
 		{
-			std::cout << "collision!" << std::endl;
+			//std::cout << "No collision" << std::endl;
 			return;
 		}
-			
 
-		
-		glm::vec3 contactNormal = glm::normalize(clothTri.getTriangleNormal()); //contact normal approximated as the triangle normal
+		else
+		{
+			/*std::cout << "Distance: " << dChecker.distance << std::endl;
+			std::cout << "Closest point: " << glm::to_string(contactPoint) << std::endl;
+			std::cout << "Particle Pos: " << glm::to_string(cpoint.getPosition()) << std::endl;
 
-		
+			std::cout << "T1: " << glm::to_string(clothTri.p1->getPosition()) << std::endl;
+			std::cout << "T2: " << glm::to_string(clothTri.p2->getPosition()) << std::endl;
+			std::cout << "T3: " << glm::to_string(clothTri.p3->getPosition()) << std::endl;
+
+			std::cout << "Triangle: " << clothTri.id << std::endl;*/
+			//std::cout << "collision!" << std::endl;
+			//return;
+		}
+
+		glm::vec3 contactNormal = glm::normalize(clothTri->getTriangleNormal()); //contact normal approximated as the triangle normal
+
 		//Gets contact point in barycentric coordinates
-		glm::vec3 baryPoint = clothTri.getBaryCentricCoordinates(contactPoint);
+		glm::vec3 baryPoint = clothTri->getBaryCentricCoordinates(contactPoint);
 
 		GLfloat vrel; //@TODO Double-Check
-		glm::vec3 interpolatedTriangleVelocity = (baryPoint.x * clothTri.p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri.p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri.p3->getVerletVelocity(timestep));
-		glm::vec3 pointVelocity = cpoint.getVerletVelocity(timestep);
+		glm::vec3 interpolatedTriangleVelocity = (baryPoint.x * clothTri->p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri->p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri->p3->getVerletVelocity(timestep));
+		glm::vec3 pointVelocity = cpoint->getVerletVelocity(timestep);
 
-		vrel = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity)); 
-
+		vrel = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity));
 
 		//'To stop the imminent collision we apply an inelastic impulse of magnitude Ic=mvN/ 2 in the normal direction'
-		glm::vec3 inelasticImpulse = clothTri.mass * vrel * contactNormal / 2.0f;
+		glm::vec3 inelasticImpulse = clothTri->mass * vrel * contactNormal / 2.0f;
+
+		//std::cout << glm::to_string(inelasticImpulse) << std::endl;
+
 		applyImpulse2Triangle(inelasticImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 
 
 
-		// II 'The  spring  based  repulsion  force'
-		float overlap = clothThickness - glm::dot(cpoint.getPosition() - (baryPoint.x * clothTri.p1->position) - (baryPoint.y * clothTri.p2->position) - (baryPoint.z * clothTri.p3->position), contactNormal);
+		//Change the colour of the triangle hit
+		clothTri->FlagCollisionColour();
+		cpoint->setColour(glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+		//return;
+
+
+
+		// II 'The  spring  based  repulsion  force' - @TODO
+		// 'spring repulsion force is limited to a maximum when the objects touch, thus avoiding problems with stiffness'
+		float overlap = clothThickness - (glm::dot(cpoint->getPosition() - (baryPoint.x * clothTri->p1->position) - (baryPoint.y * clothTri->p2->position) - (baryPoint.z * clothTri->p3->position), contactNormal));
+
+		//std::cout << "over: " << glm::dot(cpoint->getPosition() - (baryPoint.x * clothTri->p1->position) - (baryPoint.y * clothTri->p2->position) - (baryPoint.z * clothTri->p3->position), contactNormal) << std::endl;
+
 
 		// 'we found that matching the stiffness of the stretch springs in the cloth gave good results'
 		glm::vec3 springRepulsionForce = shearKs * overlap * contactNormal;
 
 		float overlapThreshold = (0.1f * overlap) / timestep;
 
+		// ' If the normal component of relative velocity vN >= 0.1d/dt already we apply no repulsion'
 		if (vrel >= overlapThreshold)
+		{
 			return;
+		}
+
 		else
 		{
-			//Change the colour of the triangle hit
-			clothTri.FlagCollisionColour();
-			glm::vec3 red(1.0f, 0.0f, 0.0f);
-			cpoint.setColour(glm::vec3(1.0f, 0.0f, 0.0f));
+			//std::cout << "Spring based repulsion" << std::endl;
 
-			//Double check this normal component
-			glm::vec3 springImpulse = contactNormal * -std::min((timestep * shearKs * overlap), clothTri.mass * (overlapThreshold - vrel));
+
+			//std::cout << "1: " << (timestep * shearKd * overlap) << std::endl;
+			//std::cout << "2: " << clothTri->mass * (overlapThreshold - vrel) << std::endl;
+
+			//This doesn't seem to work well? @TODO
+			glm::vec3 springImpulse = contactNormal * -std::min((/*timestep * */shearKs * overlap), clothTri->mass * (overlapThreshold - vrel));
+
+			springImpulse = contactNormal * -clothTri->mass * (overlapThreshold - vrel);
+			//std::cout << "SpringImpulse Force: " << glm::to_string(springImpulse) << std::endl;
 
 			applyImpulse2Triangle(springImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 
 
-			//calculate and apply friction impulse
-
+			//
+			// III calculate and apply friction impulse
+			//
 			//get the precollision relative tangential velocity, projection of the relative velocity onto the triangle
 			glm::vec3 vrelT;
 			vrelT = (pointVelocity - interpolatedTriangleVelocity) - vrel / (pow(glm::length(contactNormal), 2)) * contactNormal;
 
-			glm::vec3 interpolatedTriangleVelocityNEW = (baryPoint.x * clothTri.p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri.p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri.p3->getVerletVelocity(timestep));
-			glm::vec3 pointVelocityNEW = cpoint.getVerletVelocity(timestep);
-			GLfloat vrelNEW = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity));
+			glm::vec3 interpolatedTriangleVelocityNEW = (baryPoint.x * clothTri->p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri->p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri->p3->getVerletVelocity(timestep));
+			glm::vec3 pointVelocityNEW = cpoint->getVerletVelocity(timestep);
+			GLfloat vrelNEW = glm::dot(contactNormal, (pointVelocityNEW - interpolatedTriangleVelocityNEW));
 
 			GLfloat deltaVrel = vrelNEW - vrel;
 
@@ -717,17 +766,26 @@ public:
 
 			glm::vec3 fricVel = std::max((1.0f - fricCoeff * velTerm), 0.0f) * vrelT;
 
-			//applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+			
+
+			if (glm::length(fricVel) > 0)
+			{
+				std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
+				applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+			}
+
 		}
 	}
 
 
 
-	void applyImpulse2Triangle(glm::vec3 impulse, Triangle clothTri, Particle parti, glm::vec3 baryPoint, glm::vec3 contactPoint, glm::vec3 contactNormal, float timestep)
+
+
+	void applyImpulse2Triangle(glm::vec3 impulse, Triangle *clothTri, Particle *parti, glm::vec3 baryPoint, glm::vec3 contactPoint, glm::vec3 contactNormal, float timestep)
 	{
 		// 'For the point-triangle case,  where an interior point of triangle~x1~x2~x3 with barycentric coordinates w1,w2,w3 
 		// is interacting with point~x4 , we compute adjusted impulses'
-		
+
 
 		glm::vec3 adjustedImpulse = (2.0f * impulse) / (1.0f + (pow(baryPoint[0], 2.0f)) + (pow(baryPoint[1], 2.0f)) + (pow(baryPoint[2], 2.0f)));
 
@@ -735,17 +793,26 @@ public:
 
 		float b1 = baryPoint[0], b2 = baryPoint[1], b3 = baryPoint[2];
 
-		clothTri.p1->velocity += (b1 * (adjustedImpulse / clothTri.mass) * contactNormal);
-		clothTri.p2->velocity += (b2 * (adjustedImpulse / clothTri.mass) * contactNormal);
-		clothTri.p3->velocity += (b3 * (adjustedImpulse / clothTri.mass) * contactNormal);
+		glm::vec3 vp1 = (b1 * (adjustedImpulse * clothTri->massinv) * contactNormal);
+		glm::vec3 vp2 = (b2 * (adjustedImpulse * clothTri->massinv) * contactNormal);
+		glm::vec3 vp3 = (b3 * (adjustedImpulse * clothTri->massinv) * contactNormal);
 
-		glm::vec3 pointVelocity = adjustedImpulse / parti.mass * contactNormal; //@TODO??
-		parti.postCollisionApplyVelocity(pointVelocity, timestep);
 
-		clothTri.p1->postCollisionApplyVelocity(clothTri.p1->velocity /** 100.0f*/, timestep);
-		clothTri.p2->postCollisionApplyVelocity(clothTri.p2->velocity /** 100.0f*/, timestep);
-		clothTri.p3->postCollisionApplyVelocity(clothTri.p3->velocity /** 100.0f*/, timestep);
+		clothTri->p1->velocity += vp1;
+		clothTri->p2->velocity += vp2;
+		clothTri->p3->velocity += vp3;
+
+		//Apply the velocity change to the triangle points
+		clothTri->p1->postCollisionApplyVelocity(vp1, timestep);
+		clothTri->p2->postCollisionApplyVelocity(vp2, timestep);
+		clothTri->p3->postCollisionApplyVelocity(vp3, timestep);
+
+		//Apply the velocity change to the particle
+		glm::vec3 pointVelocity = parti->getVerletVelocity(timestep) - (adjustedImpulse * parti->massinv) * contactNormal;
+
+		parti->postCollisionApplyVelocity(pointVelocity, timestep);
 	}
+
 
 
 
@@ -775,6 +842,26 @@ public:
 			}
 		}
 	}
+
+
+
+
+
+	void CheckCollisionWithSphere(glm::vec3 sCenter, float sRadius)
+	{
+		std::vector<Particle>::iterator particle;
+		for (particle = particles.begin(); particle != particles.end(); particle++)
+		{
+			glm::vec3 distance = (*particle).getPosition() - sCenter;
+			float disLength = glm::length(distance);
+
+			if (disLength < sRadius)
+			{
+				(*particle).position += (/*glm::normalize*/(distance)* sRadius - disLength);
+			}
+		}
+	}
+
 
 #pragma endregion
 

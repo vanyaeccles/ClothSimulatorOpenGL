@@ -11,7 +11,7 @@
 #include "BoundingObject.h"
 #include "DistanceChecks.h"
 
-#define NUM_RIGIDBODIES 1
+#define NUM_RIGIDBODIES 3
 
 
 

@@ -88,7 +88,7 @@ bool applyRotationMatrixY = false;
 bool applyRotationMatrixZ = false;
 bool drawBody = false;
 
-bool rightFan = false;
+bool checkSomething = false;
 bool movePos = false;
 bool playForces = false;
 bool rotateRT = true;
@@ -126,6 +126,9 @@ glm::vec3 plane2Normal = glm::rotate(planeNormal, ninetyfive, glm::vec3(1.0f, 0.
 
 glm::vec3 planePos(0.0f, -10.0f, 0.0f);
 GLfloat planeThreshold = 0.0f;
+
+
+glm::vec3 spherePos(3.0f, -5.0f, -5.0f);
 
 glm::vec3 posVec(0.0f, 0.0f, 0.0f);
 glm::vec3 velVecX(0.0f, 0.0f, 0.0f);
@@ -196,7 +199,7 @@ int main()
 	
 	Shader whiteShader("U:/Physics/FinalProject/Stuff/Shaders/plaincolour/white.vert", "U:/Physics/FinalProject/Stuff/Shaders/plaincolour/white.frag");
 
-	//Shader drawShader("U:/Physics/FinalProject/Stuff/Shaders/plaincolour/blue.vert", "U:/Physics/FinalProject/Stuff/Shaders/plaincolour/blue.frag");
+	Shader drawShader("U:/Physics/Phys4/Stuff/Shaders/plaincolour/blue.vert", "U:/Physics/Phys4/Stuff/Shaders/plaincolour/blue.frag");
 	
 	Shader boundboxShader("U:/Physics/FinalProject/Stuff/Shaders/plaincolour/boundbox.vert", "U:/Physics/FinalProject/Stuff/Shaders/plaincolour/boundbox.frag");
 
@@ -211,6 +214,8 @@ int main()
 	Model clothM("U:/Physics/FinalProject/Stuff/Models/clothModel.obj");
 
 	Model sphere("U:/Physics/FinalProject/Stuff/Models/sphere/sphere.obj");
+
+	Model largeSphere("U:/Physics/FinalProject/Stuff/Models/sphere/largesphere.obj");
 
 	Model quadModel("U:/Physics/FinalProject/Stuff/Models/quadModel.obj");
 
@@ -363,10 +368,26 @@ int main()
 	bool flexionSprings = 1;
 
 	//Alternative implementation
-	Cloth cloth(10, 10, 0.1f, 30, 30, structuralSprings, shearSprings, flexionSprings, 2);
+	Cloth cloth(10, 10, 0.01f, 6, 6, structuralSprings, shearSprings, flexionSprings, 2);
 
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
 	parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
+
+
+	// Rigid Body
+	BroadPhaseCollisionDetection bpcd;
+	bpcd.initialise();
+
+	bpcd.bodies[0].position = glm::vec3(0.0f, -9.5f, 8.0f);
+	bpcd.bodies[1].position = glm::vec3(6.0f, -9.0f, 8.0f);
+	bpcd.bodies[2].position = glm::vec3(3.0f, -8.0f, 13.0f);
+
+	for (int i = 0; i < bpcd.bodies.size(); i++)
+	{
+		bpcd.bodies[i].Update(timestep);
+	}
+
+
 
 	// Game loop
 	while (!glfwWindowShouldClose(window))
@@ -413,13 +434,11 @@ int main()
 			// Particle
 			parti.verletIntegration(dampingConstant, timestep);
 
-			//for (int i = 0; i < cloth.clothTriangles.size(); i++)
-			//{
-			//	cloth.onBoundingBoxCollisionPoint2Tri(cloth.clothTriangles[i], parti, timestep);
-			//}
+			
 		}
 		
 
+#pragma region DRAWING OBJECTS
 
 		std::vector<Particle>::iterator particle;
 		for (particle = cloth.particles.begin(); particle != cloth.particles.end(); particle++)
@@ -443,14 +462,14 @@ int main()
 		model = glm::mat4();
 		//Translate to the particles position
 		model = glm::translate(model, parti.position);
-		//glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), parti.colour[0], parti.colour[1], parti.colour[2]);
+		glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), parti.colour[0], parti.colour[1], parti.colour[2]);
 		//std::cout << "Colour: " << glm::to_string(parti.colour) << std::endl;
 		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		sphere.Draw(whiteShader);
 
 
 
-		if (boundBox)
+		if (boundBox) // Press B
 		{
 			for (int i = 0; i < cloth.clothTriangles.size(); i++)
 			{
@@ -471,54 +490,134 @@ int main()
 			}
 		}
 		
-		if (!boundBox)
+		//Draw the bodies
+		for (int i = 0; i < bpcd.bodies.size(); i++)
 		{
-			cloth.BuildAABBVH(cloth.rootNode, cloth.clothTriangles, 2);
-			boundBox = true;
+			//if (drawBody)
+			//{
+				//Draw inner box
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				drawShader.Use();
+				model = glm::mat4();
+				glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+				bpcd.bodies[i].model.Draw(drawShader);
+
+
+				//Draw line box
+				whiteShader.Use();
+				glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+				model = glm::mat4();
+				model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				bpcd.bodies[i].model.Draw(whiteShader);
+			//}
 		}
 
-		
+		//Draw a sphere
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		drawShader.Use();
+		model = glm::mat4();
+		model = glm::translate(model, spherePos);
+		glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		largeSphere.Draw(drawShader);
+
+
+#pragma endregion
+
+
+
+#pragma region BOUNDING VOLUME HIERARCHY
+
+		//if (!boundBox)
+		//{
+		//	//cloth.BuildAABBVH(cloth.rootNode, cloth.clothTriangles, 2);
+		//	//boundBox = true;
+		//}
+
+		////std::cout << cloth.ClothNodes.size() << std::endl;
+
+		//for (int i = 0; i < cloth.ClothNodes.size(); i++)
+		//{
+
+		//	//std::cout << cloth.ClothNodes[i].leaf << std::endl;
+
+		//	int j = 0;
+		//	if (cloth.ClothNodes[i].leaf)
+		//	{
+		//		j++;
+		//		//std::cout << cloth.ClothNodes.size() << std::endl;
+		//		std::cout << j << std::endl;
+		//	}
+		//}
 		
 		//cloth.CheckBVH(cloth.rootNode, parti, timestep); //@TODO
+
+#pragma endregion	
+		
+		
+
+
+#pragma region CLOTH FORCES + COLLISION
 
 
 
 		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		cloth.addForce(grav, timestep);
+		//cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
-		cloth.applyWindForce(wind, timestep);
+		//cloth.applyWindForce(wind, timestep);
+
+
+		//if(checkSomething)
+		{
+			// Particle collision check
+			for (int i = 0; i < cloth.clothTriangles.size(); i++)
+			{
+				cloth.onBoundingBoxCollisionPoint2Tri(&cloth.clothTriangles[i], &parti, timestep);
+			}
+		}
+		
+
+		//Brute force plane check
+		//cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+
+		//Sphere collision check
+		//cloth.CheckCollisionWithSphere(spherePos, 2.0f);
+
+#pragma endregion
 
 
 
-		cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 
 
 
-
-
-
-
-
-
-		//DUMB AND EXPENSIVE!
+		//EXPENSIVE, Not currently a good approach!
 
 #pragma region DRAW CLOTH WELL
-		//for (int i = 0; i < cloth1.clothTriangles.size(); i++)
+		//for (int i = 0; i < cloth.clothTriangles.size(); i++)
 		//{
 		//	GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
-		//	x1 = cloth1.clothTriangles[i].p1->position[0];
-		//	y1 = cloth1.clothTriangles[i].p1->position[1];
-		//	z1 = cloth1.clothTriangles[i].p1->position[2];
-		//	x2 = cloth1.clothTriangles[i].p2->position[0];
-		//	y2 = cloth1.clothTriangles[i].p2->position[1];
-		//	z2 = cloth1.clothTriangles[i].p2->position[2];
+		//	x1 = cloth.clothTriangles[i].p1->position[0];
+		//	y1 = cloth.clothTriangles[i].p1->position[1];
+		//	z1 = cloth.clothTriangles[i].p1->position[2];
+		//	x2 = cloth.clothTriangles[i].p2->position[0];
+		//	y2 = cloth.clothTriangles[i].p2->position[1];
+		//	z2 = cloth.clothTriangles[i].p2->position[2];
 
-		//	x3 = cloth1.clothTriangles[i].p3->position[0];
-		//	y3 = cloth1.clothTriangles[i].p3->position[1];
-		//	z3 = cloth1.clothTriangles[i].p3->position[2];
+		//	x3 = cloth.clothTriangles[i].p3->position[0];
+		//	y3 = cloth.clothTriangles[i].p3->position[1];
+		//	z3 = cloth.clothTriangles[i].p3->position[2];
 
 		//	// Set up vertex data (and buffer(s)) and attribute pointers
 		//	GLfloat vertices[] = {
@@ -543,9 +642,6 @@ int main()
 
 		
 
-		
-
-		
 
 		
 		
@@ -823,20 +919,21 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		posVec = glm::vec3(0.0f, 0.0f, 0.0f);
 		movePos = !movePos;
 	}
-		
+	
 
-	if (key == GLFW_KEY_L && action == GLFW_PRESS)
-		applyRotationMatrix = !applyRotationMatrix;
+	if (key == GLFW_KEY_I && action == GLFW_PRESS)
+		spherePos.x += 0.3f;
 	if (key == GLFW_KEY_K && action == GLFW_PRESS)
-		applyRotationMatrixY = !applyRotationMatrixY;
+		spherePos.x -= 0.3f;
+	if (key == GLFW_KEY_L && action == GLFW_PRESS)
+		spherePos.z += 0.3f;
 	if (key == GLFW_KEY_J && action == GLFW_PRESS)
-		applyRotationMatrixZ = !applyRotationMatrixZ;
+		spherePos.z -= 0.3f;
 	
 
 	if (key == GLFW_KEY_N && action == GLFW_PRESS)
-		angVec += glm::vec3(0.5f, 0.5f, 0.0f);
-	if (key == GLFW_KEY_M && action == GLFW_PRESS)
-		angVec -= glm::vec3(0.5f, 0.5f, 0.0f);
+		checkSomething = !checkSomething;
+
 
 
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)

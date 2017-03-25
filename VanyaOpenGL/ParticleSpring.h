@@ -43,6 +43,8 @@ public:
 
 	void satisfySpring(float timestep)
 	{
+		
+
 		glm::vec3 p2Pos = (p2->position);
 		glm::vec3 p2PosOld = (p2->oldPosition);
 
@@ -63,8 +65,13 @@ public:
 
 		glm::vec3 SpringForce = (leftTerm + rightTerm) * glm::normalize(deltaPos);
 
+		if (springType == 2)
+		{
+		}
+
 		p1->applySpringForce(SpringForce, timestep);
 		p2->applySpringForce(-1.0f * SpringForce, timestep);
+		
 
 	}
 

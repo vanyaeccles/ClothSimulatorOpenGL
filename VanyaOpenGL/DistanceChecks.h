@@ -61,6 +61,13 @@ class DistanceChecker
 
 	}
 
+	void ResetChecker()
+	{
+		closestPoint = glm::vec3(100.0f);
+		distance = 100.0f;
+	}
+
+
 	glm::vec3 point2LinePointDistance(glm::vec3 p0, glm::vec3 p1, glm::vec3 p2)
 	{
 		glm::vec3 closestP;

@@ -463,10 +463,16 @@ public:
 
 	void setBodies()
 	{
+		bodies[0].setModel("U:/Physics/FinalProject/Stuff/Models/cube.obj");
+
+		bodies[1].setModel("U:/Physics/FinalProject/Stuff/Models/largercube.obj");
+
+		bodies[2].setModel("U:/Physics/FinalProject/Stuff/Models/largestcube.obj");
+
 		for (int i = 0; i < bodies.size(); i++)
 		{
 
-			bodies[i].setModel("U:/Physics/Phys4/Stuff/Models/cube.obj");
+			//bodies[i].setModel("U:/Physics/Phys4/Stuff/Models/cube.obj");
 
 			
 			/*
@@ -475,15 +481,17 @@ public:
 			bodies[i].position[2] = lowerRandBoundPosition + (static_cast <float> (rand()) / static_cast <float> (RAND_MAX / upperRandBoundPosition - lowerRandBoundPosition));
 			*/
 			
-			bodies[i].position[0] = 0.0f;
-			bodies[i].position[1] = 3.0f;
-			bodies[i].position[2] = 0.0f;
+			//bodies[i].position[0] = 0.0f;
+			//bodies[i].position[1] = 3.0f;
+			//bodies[i].position[2] = 0.0f;
 			
 			//give them an integer ID
 			bodies[i].bodyID = i;
 
 
 		}
+
+		
 	}
 	
 
