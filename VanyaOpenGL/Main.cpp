@@ -114,6 +114,7 @@ float ninetyfive = PI / 1.9f;
 
 int i, j;
 int clock;
+int place = 0;
 
 GLfloat narrowPhasePlaneThreshold = 0.000000001f; //0.01f;
 GLfloat coeffRest = 0.45;
@@ -358,18 +359,17 @@ int main()
 #pragma endregion
 
 
-	// Initialize the (older) cloth system
-	//ClothSystem cloth;
-	//cloth.cloParts.initializeParticles();
-	//cloth.initialize();
 
 	bool structuralSprings = 1;
 	bool shearSprings = 1;
 	bool flexionSprings = 1;
 
-	//Alternative implementation
-	Cloth cloth(10, 10, 0.01f, 6, 6, structuralSprings, shearSprings, flexionSprings, 2);
+	//Cloth implementation
+	Cloth cloth(10, 10, 0.01f, 12, 12, structuralSprings, shearSprings, flexionSprings, 2);
+	cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
 
+
+	// A test particle
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
 	parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
 
@@ -434,7 +434,6 @@ int main()
 			// Particle
 			parti.verletIntegration(dampingConstant, timestep);
 
-			
 		}
 		
 
@@ -469,27 +468,49 @@ int main()
 
 
 
-		if (boundBox) // Press B
-		{
-			for (int i = 0; i < cloth.clothTriangles.size(); i++)
-			{
-				cloth.clothTriangles[i].GetBoundingBox();
+		//if (boundBox) // Press B
+		//{
+		//	for (int i = 0; i < cloth.clothTriangles.size(); i++)
+		//	{
+		//		cloth.clothTriangles[i].GetBoundingBox();
 
-				//Draw bounding box
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				boundboxShader.Use();
-				glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-				model = glm::mat4();
-				model = glm::translate(model, cloth.clothTriangles[i].getTriangleUpperCenter());
-				model = glm::scale(model, glm::vec3(cloth.clothTriangles[i].xDist, cloth.clothTriangles[i].yDist, cloth.clothTriangles[i].zDist));
-				glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-				glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
-				cube.Draw(boundboxShader);
-			}
-		}
+		//		//Draw bounding box
+		//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//		boundboxShader.Use();
+		//		glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		//		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		//		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//		model = glm::mat4();
+		//		model = glm::translate(model, cloth.clothTriangles[i].getTriangleUpperCenter());
+		//		model = glm::scale(model, glm::vec3(cloth.clothTriangles[i].xDist, cloth.clothTriangles[i].yDist, cloth.clothTriangles[i].zDist));
+		//		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//		glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
+		//		cube.Draw(boundboxShader);
+		//	}
+		//}
 		
+
+		
+
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		boundboxShader.Use();
+		glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		model = glm::mat4();
+		model = glm::translate(model, cloth.ClothNodes[place]->boundingVolume.centerPos);
+		model = glm::scale(model, glm::vec3(cloth.ClothNodes[place]->boundingVolume.xDist, cloth.ClothNodes[place]->boundingVolume.yDist, cloth.ClothNodes[place]->boundingVolume.zDist));
+		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
+		cube.Draw(boundboxShader);
+
+		
+		
+		//std::cout << "Center Pos: " << glm::to_string(cloth.ClothNodes[i]->boundingVolume.centerPos) << std::endl;
+		//std::cout << cloth.clothTriangles[i].maxX << std::endl;
+		//cloth.clothTriangles[2].minX, cloth.clothTriangles[2].maxX;
+
+
 		//Draw the bodies
 		for (int i = 0; i < bpcd.bodies.size(); i++)
 		{
@@ -519,7 +540,7 @@ int main()
 			//}
 		}
 
-		//Draw a sphere
+		//Draw a bid collision sphere
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		drawShader.Use();
 		model = glm::mat4();
@@ -537,29 +558,7 @@ int main()
 
 #pragma region BOUNDING VOLUME HIERARCHY
 
-		//if (!boundBox)
-		//{
-		//	//cloth.BuildAABBVH(cloth.rootNode, cloth.clothTriangles, 2);
-		//	//boundBox = true;
-		//}
-
-		////std::cout << cloth.ClothNodes.size() << std::endl;
-
-		//for (int i = 0; i < cloth.ClothNodes.size(); i++)
-		//{
-
-		//	//std::cout << cloth.ClothNodes[i].leaf << std::endl;
-
-		//	int j = 0;
-		//	if (cloth.ClothNodes[i].leaf)
-		//	{
-		//		j++;
-		//		//std::cout << cloth.ClothNodes.size() << std::endl;
-		//		std::cout << j << std::endl;
-		//	}
-		//}
-		
-		//cloth.CheckBVH(cloth.rootNode, parti, timestep); //@TODO
+		cloth.CheckBVH(&cloth.rootNode, &parti, timestep); //@TODO
 
 #pragma endregion	
 		
@@ -583,21 +582,23 @@ int main()
 			// Particle collision check
 			for (int i = 0; i < cloth.clothTriangles.size(); i++)
 			{
-				cloth.onBoundingBoxCollisionPoint2Tri(&cloth.clothTriangles[i], &parti, timestep);
+				//cloth.onBoundingBoxCollisionPoint2Tri(&cloth.clothTriangles[i], &parti, timestep);
 			}
 		}
 		
 
 		//Brute force plane check
-		//cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+		cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 		//Sphere collision check
-		//cloth.CheckCollisionWithSphere(spherePos, 2.0f);
+		cloth.CheckCollisionWithSphere(spherePos, 2.0f);
 
 #pragma endregion
 
 
 
+
+		
 
 
 
@@ -937,7 +938,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 
 	if (key == GLFW_KEY_X && action == GLFW_PRESS)
-		applyVec = !applyVec;
+		place++;
 
 	if (key == GLFW_KEY_C && action == GLFW_PRESS)
 		applyForce = !applyForce;

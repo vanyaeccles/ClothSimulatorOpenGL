@@ -44,7 +44,7 @@ public:
 
 	// Bounding Volume Hierarchy
 	Node rootNode;
-	std::vector<Node> ClothNodes;
+	std::vector<Node*> ClothNodes;
 
 	// Cloth contents
 	std::vector<Particle> particles;
@@ -107,6 +107,24 @@ public:
 
 
 
+
+	void Update(float dampingConstant, int constraintIterations, int springIterations, float timestep)
+	{
+
+		satisfyConstraints(constraintIterations);
+
+		//satisfySprings(springIterations, timestep);
+
+
+		verletIntegrations(dampingConstant, timestep);
+
+	}
+
+
+
+
+#pragma region INIT_PARTICLES
+
 	// This creates and fills the grid with particles
 	void initialiseParticleGrid()
 	{
@@ -133,47 +151,86 @@ public:
 		}
 	}
 
+	void pinCloth()
+	{
+
+		// making the upper left most three and right most three particles unmovable, for nice hanging effect
+
+		for (int i = 0; i < 2; i++)
+		{
+			//getParticle(0 + i, 0)->offsetPosition(glm::vec3(0.5, 0.0, 0.0));
+			getParticle(0 + i, 0)->pinParticle();
+
+			//getParticle(0 + i, 0)->offsetPosition(glm::vec3(-0.5, 0.0, 0.0)); 
+			getParticle(gridWidth - 1 - i, 0)->pinParticle();
+		}
+
+		//getParticle(10, 0)->offsetPosition(glm::vec3(0.0, 0.0, 1.0)); 
+		//getParticle(10, 0)->pinParticle();
+
+		//getParticle(0, 0)->offsetPosition(glm::vec3(0.0, 0.0, 0.0));
+		//getParticle(0, 0)->pinParticle();
+
+		//getParticle(0, 0)->pinParticle();
+		//getParticle(particleGridWidth-1, particleGridHeight-1)->pinParticle();
+		//getParticle(particleGridWidth - 11, particleGridHeight-1)->pinParticle();
+	}
+
+#pragma endregion
+
 
 
 
 #pragma region "BOUNDING_VOL_HIERARCHY"
 
 
+	Node* GetClothRootNode()
+	{
+		return &(this->rootNode);
+	}
 
 	void CheckBVH(Node *node, Particle *p, float timestep)
 	{
+		if (!node)
+		{
+			//std::cout << "null pointer";
+			return;
+		}
 
 		// check for intersection
-		//if (!Point2AABBIntersectionTest(p.position, node.boundingVolume))
-			//return;
+		if (!Point2AABBIntersectionTest(p->position, node->boundingVolume))
+		{
+			//std::cout << "Not intersecting" << std::endl;
+			return;
+		}
+			
 
-		std::cout << "BB colision" << std::endl;
+		//std::cout << "BB colision" << std::endl;
+
 
 		// if the node is a leaf, check all the triangles for collision
 		if (node->leaf)
 		{
 			for (int i = 0; i < node->nodeTriangles.size(); i++)
 				onBoundingBoxCollisionPoint2Tri(&node->nodeTriangles[i], p, timestep);
-			std::cout << "Leaf Node" << std::endl;
 			return;
 		}
 
-		Node *left = node->leftChild;
-		Node *right = node->rightChild;
-
-		CheckBVH(left, p, timestep);
-		CheckBVH(right, p, timestep);
-
-		/*CheckBVH(*node.leftChild, p, timestep);
-		CheckBVH(*node.rightChild, p, timestep);*/
+		if (node->leaf == false)
+		{
+			CheckBVH(node->leftChild, p, timestep);
+			CheckBVH(node->rightChild, p, timestep);
+		}
 	}
 
 
+	// For testing a point intersecting with an AABB
 	bool Point2AABBIntersectionTest(glm::vec3 point, AABB box)
 	{
 		bool xIntersect = (point.x >= box.negX && point.x <= box.posX);
 		bool yIntersect = (point.y >= box.negY && point.y <= box.posY);
 		bool zIntersect = (point.z >= box.negZ && point.z <= box.posZ);
+
 
 		if (xIntersect && yIntersect && zIntersect)
 			return true;
@@ -181,18 +238,23 @@ public:
 			return false;
 	}
 
-	int i = 0;
+
 
 	// builds the bounding box hierarchy
-	void BuildAABBVH(Node node, std::vector<Triangle> triangles, int threshold)
+	void BuildAABBVH(Node *node, std::vector<Triangle> triangles, int threshold)
 	{
+		triangles.size();
 
-		GLfloat MinX = triangles[0].minX, MaxX = triangles[0].maxX, MinY = triangles[0].minY, MaxY = triangles[0].maxY, MinZ = triangles[0].minZ, MaxZ = triangles[0].maxZ;
+
+		// Sets the mins and maxs with a default value from the triangle vector
+		float MinX = triangles[0].minX, MaxX = triangles[0].maxX, MinY = triangles[0].minY, MaxY = triangles[0].maxY, MinZ = triangles[0].minZ, MaxZ = triangles[0].maxZ;
+
+		
 
 		//Get the min and maxs of the bounding boxes
 		for (int i = 1; i < triangles.size(); i++)
 		{
-			//glm::vec3 cenTri = triangles[i].getTriangleUpperCenter();
+			
 
 			if (triangles[i].minX < MinX) MinX = triangles[i].minX;
 			if (triangles[i].minY < MinY) MinY = triangles[i].minY;
@@ -201,53 +263,59 @@ public:
 			if (triangles[i].maxY > MaxY) MaxY = triangles[i].maxY;
 			if (triangles[i].maxZ > MaxZ) MaxZ = triangles[i].maxZ;
 		}
-
-		//std::cout << "It: " << i << std::endl;
-		//i++;
-
 		//std::cout << triangles.size() << std::endl;
 
+
 		//this nodes AABB is calculated and stored
-		node.setNodeBoundingVolume(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
+		node->setNodeBoundingVolume(MinX, MaxX, MinY, MaxY, MinZ, MaxZ);
+
+
 
 		//Check if its small enough to be leaf, and then assign the remaining triangles to its object list
 		if (triangles.size() <= threshold)
 		{
 			//std::cout << "Set as leaf" << std::endl;
-			node.setLeaf(triangles);
+			node->setLeaf(triangles);
+			ClothNodes.push_back(node);
 			return;
 		}
 
-		//std::cout << triangles.size() << std::endl;
+
 
 		// sorts the objects 
 		triangles = sortObjectsAlongLongestAxis(triangles);
 		//split the sorted list into two lists
 		std::vector<Triangle> rightObjects = splitRightObjects(triangles);
 		std::vector<Triangle> leftObjects = splitLeftObjects(triangles);
+
 		//std::cout << "left is " << leftObjects.size() << std::endl;
 		//std::cout << "right is " << rightObjects.size() << std::endl;
 
 
 
-		node.leftChild = new Node();
-		node.rightChild = new Node();
+		//node->leftChild = new Node();
+		node->setLeftChild(new Node());
+		//node->rightChild = new Node();
+		node->setRightChild(new Node());
+
+
+		ClothNodes.push_back(node);
+		
 
 		if (leftObjects.size() >= threshold)
 		{
-			BuildAABBVH(*node.leftChild, leftObjects, threshold);
+			BuildAABBVH(node->leftChild, leftObjects, threshold);
 			//std::cout << "Leftie" << std::endl;
 		}
 
 		if (rightObjects.size() >= threshold)
 		{
-			BuildAABBVH(*node.rightChild, rightObjects, threshold);
+			BuildAABBVH(node->rightChild, rightObjects, threshold);
 			//std::cout << "Rightie" << std::endl;
 		}
-
-
-		ClothNodes.push_back(node);
 	}
+
+
 
 
 	std::vector<Triangle> sortObjectsAlongLongestAxis(std::vector<Triangle> triangles) //@TODO double check
@@ -578,43 +646,6 @@ public:
 
 #pragma endregion
 
-	void pinCloth()
-	{
-
-		// making the upper left most three and right most three particles unmovable, for nice hanging effect
-
-		for (int i = 0; i < 2; i++)
-		{
-			//getParticle(0 + i, 0)->offsetPosition(glm::vec3(0.5, 0.0, 0.0));
-			getParticle(0 + i, 0)->pinParticle();
-
-			//getParticle(0 + i, 0)->offsetPosition(glm::vec3(-0.5, 0.0, 0.0)); 
-			getParticle(gridWidth - 1 - i, 0)->pinParticle();
-		}
-
-		//getParticle(10, 0)->offsetPosition(glm::vec3(0.0, 0.0, 1.0)); 
-		//getParticle(10, 0)->pinParticle();
-
-		//getParticle(0, 0)->offsetPosition(glm::vec3(0.0, 0.0, 0.0));
-		//getParticle(0, 0)->pinParticle();
-
-		//getParticle(0, 0)->pinParticle();
-		//getParticle(particleGridWidth-1, particleGridHeight-1)->pinParticle();
-		//getParticle(particleGridWidth - 11, particleGridHeight-1)->pinParticle();
-	}
-
-
-	void Update(float dampingConstant, int constraintIterations, int springIterations, float timestep)
-	{
-
-		satisfyConstraints(constraintIterations);
-
-		//satisfySprings(springIterations, timestep);
-
-
-		verletIntegrations(dampingConstant, timestep);
-
-	}
 
 
 #pragma region FORCES
@@ -751,15 +782,17 @@ public:
 			//
 			// III calculate and apply friction impulse
 			//
-			//get the precollision relative tangential velocity, projection of the relative velocity onto the triangle
+			//get the precollision relative tangential velocity, projection of the relative velocity onto the triangle @TODO double check
 			glm::vec3 vrelT;
 			vrelT = (pointVelocity - interpolatedTriangleVelocity) - vrel / (pow(glm::length(contactNormal), 2)) * contactNormal;
+
+			//std::cout << "VrelT: " << glm::to_string(vrelT) << std::endl;
 
 			glm::vec3 interpolatedTriangleVelocityNEW = (baryPoint.x * clothTri->p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri->p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri->p3->getVerletVelocity(timestep));
 			glm::vec3 pointVelocityNEW = cpoint->getVerletVelocity(timestep);
 			GLfloat vrelNEW = glm::dot(contactNormal, (pointVelocityNEW - interpolatedTriangleVelocityNEW));
 
-			GLfloat deltaVrel = vrelNEW - vrel;
+			GLfloat deltaVrel = (vrelNEW - vrel)/*/timestep*/;
 
 			float fricCoeff = 0.45f;
 			GLfloat velTerm = deltaVrel / glm::length(vrelT); //@TODO double check
@@ -770,7 +803,7 @@ public:
 
 			if (glm::length(fricVel) > 0)
 			{
-				std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
+				//std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
 				applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 			}
 
@@ -820,7 +853,7 @@ public:
 
 
 
-	//Simple check for bruteforce cloth-plane collision, inelastic
+	//Simple check for bruteforce cloth-plane collision, inelastic - @TODO incorporate with BVH
 	void bruteForceParticlePlaneCollisionCheck(glm::vec3 planeNormal, glm::vec3 planePoint)
 	{
 		std::vector<Particle>::iterator parti;
@@ -847,7 +880,7 @@ public:
 
 
 
-	void CheckCollisionWithSphere(glm::vec3 sCenter, float sRadius)
+	void CheckCollisionWithSphere(glm::vec3 sCenter, float sRadius) //@TODO doesn't work great with springs, slightly better with constraints
 	{
 		std::vector<Particle>::iterator particle;
 		for (particle = particles.begin(); particle != particles.end(); particle++)
@@ -857,7 +890,8 @@ public:
 
 			if (disLength < sRadius)
 			{
-				(*particle).position += (/*glm::normalize*/(distance)* sRadius - disLength);
+				//(*particle).oldPosition += (/*glm::normalize*/(distance)* sRadius - disLength); 
+				(*particle).position += (/*glm::normalize*/(distance) * (sRadius - disLength));
 			}
 		}
 	}

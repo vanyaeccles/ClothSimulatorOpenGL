@@ -38,6 +38,21 @@ public:
 		rightChild = new Node();
 	}*/
 
+	void setLeftChild(Node *node)
+	{
+		leftChild = node;
+	}
+
+	void setRightChild(Node *node)
+	{
+		rightChild = node;
+	}
+
+	bool isLeafNode()
+	{
+		if (leaf) return true;
+		else return false;
+	}
 
 	void setLeaf(std::vector<Triangle> triangles)
 	{
@@ -48,13 +63,24 @@ public:
 
 	void setNodeBoundingVolume(GLfloat MinX, GLfloat MaxX, GLfloat MinY, GLfloat MaxY, GLfloat MinZ, GLfloat MaxZ)
 	{
-		boundingVolume.negX = MinX;
-		boundingVolume.negY = MinY;
-		boundingVolume.negZ = MinZ;
+		
+		boundingVolume.xDist = glm::abs(MinX - MaxX);
+		boundingVolume.yDist = glm::abs(MinY - MaxY);
+		boundingVolume.zDist = glm::abs(MinZ - MaxZ);
 
-		boundingVolume.posX = MaxX;
-		boundingVolume.posY = MaxY;
-		boundingVolume.posZ = MaxZ;
+
+		GLfloat xC = (MaxX + MinX) * 0.5, yC = (MaxY + MinY)  * 0.5, zC = (MaxZ + MinZ) * 0.5;
+
+		boundingVolume.centerPos = glm::vec3(xC, yC, zC);
+
+
+		boundingVolume.negX = MinX /*+ xC*/ - 0.1f;
+		boundingVolume.negY = MinY /*+ yC*/ - 0.1f;
+		boundingVolume.negZ = MinZ /*+ zC*/ - 0.1f;
+
+		boundingVolume.posX = MaxX /*+ xC*/ + 0.1f;
+		boundingVolume.posY = MaxY /*+ yC */+ 0.1f;
+		boundingVolume.posZ = MaxZ /*+ zC */+ 0.1f;
 	}
 
 

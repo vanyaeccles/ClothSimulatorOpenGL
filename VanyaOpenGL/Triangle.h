@@ -39,6 +39,8 @@ public:
 		mass = p1->mass + p2->mass + p3->mass;
 
 		massinv = 1 / mass;
+
+		GetBoundingBox();
 	}
 
 
@@ -177,7 +179,7 @@ public:
 
 	void GetBoundingBox()
 	{
-		getTriangleCenterPos();
+		bBox.centerPos = getTriangleCenterPos();
 
 		glm::vec3 pos1 = p1->getPosition();
 		glm::vec3 pos2 = p2->getPosition();
@@ -205,16 +207,21 @@ public:
 		//std::cout << "xMin " << minX << std::endl;
 
 		bBox.posX = /*centerPos.x + */maxX;
-		bBox.negX = /*centerPos.x + */minX;
-		bBox.posY = /*centerPos.y + */maxY;
-		bBox.negY = /*centerPos.y + */minY;
-		bBox.posZ = /*centerPos.z + */maxZ;
-		bBox.negZ = /*centerPos.z + */minZ;
+		bBox.negX = /*centerPos.x +*/ minX;
+		bBox.posY = /*centerPos.y +*/ maxY;
+		bBox.negY = /*centerPos.y +*/ minY;
+		bBox.posZ = /*centerPos.z +*/ maxZ;
+		bBox.negZ = /*centerPos.z +*/ minZ;
 
 		xDist = glm::abs(minX - maxX);
 		yDist = glm::abs(minY - maxY);
 		zDist = glm::abs(minZ - maxZ);
+
+		bBox.xDist = this->xDist;
+		bBox.yDist = this->yDist;
+		bBox.zDist = this->zDist;
 	}
+
 
 	void getTriangleMaxMin(glm::vec3 vertexPos)
 	{

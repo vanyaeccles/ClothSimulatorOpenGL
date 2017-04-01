@@ -27,7 +27,6 @@ struct AABoundingBox
 
 	GLfloat posZ;
 	GLfloat negZ;
-
 };
 
 
@@ -36,11 +35,19 @@ struct AABB
 	GLfloat posX;
 	GLfloat negX;
 
+	GLfloat xDist;
+
 	GLfloat posY;
 	GLfloat negY;
 
+	GLfloat yDist;
+
 	GLfloat posZ;
 	GLfloat negZ;
+
+	GLfloat zDist;
+
+	glm::vec3 centerPos;
 };
 
 #endif
