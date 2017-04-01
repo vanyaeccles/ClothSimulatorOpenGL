@@ -99,10 +99,10 @@ public:
 
 		addTriangles();
 
-		pinCloth();
+		//pinCloth();
 
 		// Builds a BVH of AABBs
-		//BuildAABBVH(rootNode, this->clothTriangles, threshBVH);
+		BuildAABBVH(&rootNode, this->clothTriangles, threshBVH);
 	}
 
 

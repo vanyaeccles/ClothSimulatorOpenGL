@@ -39,24 +39,26 @@ u:\physics\finalproject\vanyaopengl\cloth.h(573): warning C4244: 'argument': con
 u:\physics\finalproject\vanyaopengl\main.cpp(111): warning C4305: 'initializing': truncation from 'double' to 'float'
 u:\physics\finalproject\vanyaopengl\main.cpp(112): warning C4305: 'initializing': truncation from 'double' to 'float'
 u:\physics\finalproject\vanyaopengl\main.cpp(120): warning C4305: 'initializing': truncation from 'double' to 'GLfloat'
-u:\physics\finalproject\vanyaopengl\main.cpp(403): warning C4018: '<': signed/unsigned mismatch
-u:\physics\finalproject\vanyaopengl\main.cpp(405): warning C4305: 'argument': truncation from 'double' to 'float'
-u:\physics\finalproject\vanyaopengl\main.cpp(414): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(449): warning C4305: 'argument': truncation from 'double' to 'float'
-u:\physics\finalproject\vanyaopengl\main.cpp(479): warning C4018: '<': signed/unsigned mismatch
-u:\physics\finalproject\vanyaopengl\main.cpp(597): warning C4305: 'argument': truncation from 'double' to 'float'
-u:\physics\finalproject\vanyaopengl\main.cpp(599): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(601): warning C4305: 'argument': truncation from 'double' to 'float'
-u:\physics\finalproject\vanyaopengl\main.cpp(604): warning C4018: '<': signed/unsigned mismatch
-u:\physics\finalproject\vanyaopengl\main.cpp(606): warning C4305: 'argument': truncation from 'double' to 'float'
-u:\physics\finalproject\vanyaopengl\main.cpp(641): warning C4018: '<': signed/unsigned mismatch
-u:\physics\finalproject\vanyaopengl\main.cpp(1015): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1016): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1020): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1021): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1023): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1024): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
-u:\physics\finalproject\vanyaopengl\main.cpp(1031): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(387): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(389): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(419): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(430): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(465): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(495): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(548): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(613): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(615): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(617): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(620): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(622): warning C4305: 'argument': truncation from 'double' to 'float'
+u:\physics\finalproject\vanyaopengl\main.cpp(656): warning C4018: '<': signed/unsigned mismatch
+u:\physics\finalproject\vanyaopengl\main.cpp(1030): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1031): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1035): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1036): warning C4244: 'initializing': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1038): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1039): warning C4244: '=': conversion from 'double' to 'GLfloat', possible loss of data
+u:\physics\finalproject\vanyaopengl\main.cpp(1046): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
 u:\physics\finalproject\vanyaopengl\cloth.h(380): warning C4715: 'Cloth::sortObjectsAlongLongestAxis': not all control paths return a value
   VanyaOpenGL.vcxproj -> U:\Physics\FinalProject\Debug\VanyaOpenGL.exe
   VanyaOpenGL.vcxproj -> U:\Physics\FinalProject\Debug\VanyaOpenGL.pdb (Partial PDB)

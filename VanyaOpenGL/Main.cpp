@@ -371,22 +371,6 @@ int main()
 	cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
 
 
-
-	
-	// A test particle
-	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
-	Particle parti1(glm::vec3(4.0f, -5.0f, 7.0f), 1.0f);
-	Particle parti2(glm::vec3(2.0f, -5.0f, 5.0f), 1.0f);
-	Particle parti3(glm::vec3(2.0f, -5.0f, 7.0f), 1.0f);
-	//parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
-	parti.isPinned = true;
-	parti1.isPinned = true;
-	parti2.isPinned = true;
-	parti3.isPinned = true;
-	std::vector<Particle> partis;
-	partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
-
-
 	// Rigid Body
 	BroadPhaseCollisionDetection bpcd;
 	bpcd.initialise();
@@ -404,6 +388,38 @@ int main()
 	{
 		bpcd.bodies[i].Update(timestep);
 	}
+
+	// A test particle
+	/*Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
+	Particle parti1(glm::vec3(4.0f, -5.0f, 7.0f), 1.0f);
+	Particle parti2(glm::vec3(2.0f, -5.0f, 5.0f), 1.0f);
+	Particle parti3(glm::vec3(2.0f, -5.0f, 7.0f), 1.0f);*/
+
+	Particle parti(bpcd.bodies[0].modelVertices[4], 1.0f);
+	Particle parti1(bpcd.bodies[0].modelVertices[5], 1.0f);
+	Particle parti2(bpcd.bodies[0].modelVertices[6], 1.0f);
+	Particle parti3(bpcd.bodies[0].modelVertices[7], 1.0f);
+
+	Particle parti10(bpcd.bodies[1].modelVertices[4], 1.0f);
+	Particle parti11(bpcd.bodies[1].modelVertices[5], 1.0f);
+	Particle parti12(bpcd.bodies[1].modelVertices[6], 1.0f);
+	Particle parti13(bpcd.bodies[1].modelVertices[7], 1.0f);
+
+	Particle parti20(bpcd.bodies[2].modelVertices[4], 1.0f);
+	Particle parti21(bpcd.bodies[2].modelVertices[5], 1.0f);
+	Particle parti22(bpcd.bodies[2].modelVertices[6], 1.0f);
+	Particle parti23(bpcd.bodies[2].modelVertices[7], 1.0f);
+
+	//parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
+	std::vector<Particle> partis;
+	//partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
+	//partis.push_back(parti10), partis.push_back(parti11), partis.push_back(parti12), partis.push_back(parti13);
+	partis.push_back(parti20), partis.push_back(parti21), partis.push_back(parti22), partis.push_back(parti23);
+
+	for (int i = 0; i < partis.size(); i++)
+		partis[i].isPinned = true;
+
+
 
 
 
@@ -529,33 +545,33 @@ int main()
 
 
 		//Draw the bodies
-		//for (int i = 0; i < bpcd.bodies.size(); i++)
-		//{
-		//	//if (drawBody)
-		//	//{
-		//		//Draw inner box
-		//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		//		drawShader.Use();
-		//		model = glm::mat4();
-		//		glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//		bpcd.bodies[i].model.Draw(drawShader);
+		for (int i = 0; i < bpcd.bodies.size(); i++)
+		{
+			//if (drawBody)
+			//{
+				//Draw inner box
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				drawShader.Use();
+				model = glm::mat4();
+				glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+				bpcd.bodies[i].model.Draw(drawShader);
 
 
-		//		//Draw line box
-		//		whiteShader.Use();
-		//		glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		//		model = glm::mat4();
-		//		model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
-		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		//		bpcd.bodies[i].model.Draw(whiteShader);
-		//	//}
-		//}
+				//Draw line box
+				whiteShader.Use();
+				glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+				model = glm::mat4();
+				model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
+				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				bpcd.bodies[i].model.Draw(whiteShader);
+			//}
+		}
 
 		//Draw a big collision sphere
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -622,8 +638,7 @@ int main()
 
 
 
-		//EXPENSIVE, Not currently a good approach!
-
+		//Prob a bit expensive, but seems to work ok!
 #pragma region DRAW CLOTH WELL
 
 		phongShader.Use();
@@ -711,7 +726,7 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		model = glm::mat4();
-		model = glm::translate(model, planePos);
+		model = glm::translate(model, planePos - 0.1f);
 		model = glm::scale(model, glm::vec3(30.0f, 30.0f, 30.0f));
 		model = glm::rotate(model, ninety, glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
