@@ -61,8 +61,10 @@ public:
 		this->nodeTriangles = triangles;
 	}
 
+
 	void setNodeBoundingVolume(GLfloat MinX, GLfloat MaxX, GLfloat MinY, GLfloat MaxY, GLfloat MinZ, GLfloat MaxZ)
 	{
+		
 		
 		boundingVolume.xDist = glm::abs(MinX - MaxX);
 		boundingVolume.yDist = glm::abs(MinY - MaxY);

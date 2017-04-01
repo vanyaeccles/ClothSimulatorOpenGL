@@ -30,8 +30,10 @@ struct AABoundingBox
 };
 
 
-struct AABB
+class AABB
 {
+public:
+
 	GLfloat posX;
 	GLfloat negX;
 

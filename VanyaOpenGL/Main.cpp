@@ -119,7 +119,7 @@ int place = 0;
 GLfloat narrowPhasePlaneThreshold = 0.000000001f; //0.01f;
 GLfloat coeffRest = 0.45;
 
-
+glm::vec3 lightPos(5.0f, 0.0f, 10.0f);
 
 
 glm::vec3 planeNormal(0.0f, 1.0f, 0.0f);
@@ -203,6 +203,8 @@ int main()
 	Shader drawShader("U:/Physics/Phys4/Stuff/Shaders/plaincolour/blue.vert", "U:/Physics/Phys4/Stuff/Shaders/plaincolour/blue.frag");
 	
 	Shader boundboxShader("U:/Physics/FinalProject/Stuff/Shaders/plaincolour/boundbox.vert", "U:/Physics/FinalProject/Stuff/Shaders/plaincolour/boundbox.frag");
+
+	Shader phongShader("U:/Physics/FinalProject/Stuff/Shaders/Lighting/phong.vert", "U:/Physics/FinalProject/Stuff/Shaders/Lighting/phong.frag");
 
 #pragma endregion
 
@@ -365,22 +367,38 @@ int main()
 	bool flexionSprings = 1;
 
 	//Cloth implementation
-	Cloth cloth(10, 10, 0.01f, 12, 12, structuralSprings, shearSprings, flexionSprings, 2);
+	Cloth cloth(10, 10, 0.01f, 14, 14, structuralSprings, shearSprings, flexionSprings, 2);
 	cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
 
 
+
+	
 	// A test particle
 	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
-	parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
+	Particle parti1(glm::vec3(4.0f, -5.0f, 7.0f), 1.0f);
+	Particle parti2(glm::vec3(2.0f, -5.0f, 5.0f), 1.0f);
+	Particle parti3(glm::vec3(2.0f, -5.0f, 7.0f), 1.0f);
+	//parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
+	parti.isPinned = true;
+	parti1.isPinned = true;
+	parti2.isPinned = true;
+	parti3.isPinned = true;
+	std::vector<Particle> partis;
+	partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
 
 
 	// Rigid Body
 	BroadPhaseCollisionDetection bpcd;
 	bpcd.initialise();
 
-	bpcd.bodies[0].position = glm::vec3(0.0f, -9.5f, 8.0f);
+	bpcd.bodies[0].position = glm::vec3(0.0f, -9.5f, 8.0f); //Far
 	bpcd.bodies[1].position = glm::vec3(6.0f, -9.0f, 8.0f);
 	bpcd.bodies[2].position = glm::vec3(3.0f, -8.0f, 13.0f);
+
+	bpcd.bodies[0].position = glm::vec3(0.0f, -9.5f, 4.0f); //Close
+	bpcd.bodies[1].position = glm::vec3(6.0f, -9.0f, 4.0f);
+	bpcd.bodies[2].position = glm::vec3(3.0f, -8.0f, 6.5f);
+
 
 	for (int i = 0; i < bpcd.bodies.size(); i++)
 	{
@@ -416,7 +434,6 @@ int main()
 		//glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		//glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 
 
 
@@ -432,8 +449,7 @@ int main()
 			cloth.Update(dampingConstant, constraintIterations, springIterations, timestep);
 
 			// Particle
-			parti.verletIntegration(dampingConstant, timestep);
-
+			//parti.verletIntegration(dampingConstant, timestep);
 		}
 		
 
@@ -454,17 +470,23 @@ int main()
 			//Translate to the particles position
 			model = glm::translate(model, glm::vec3(partX, partY, partZ));
 			glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-			quadModel.Draw(whiteShader);
+			//quadModel.Draw(whiteShader);
+			sphere.Draw(whiteShader);
 		}
 
-		// DRAW Sphere for the collision particle
-		model = glm::mat4();
-		//Translate to the particles position
-		model = glm::translate(model, parti.position);
-		glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), parti.colour[0], parti.colour[1], parti.colour[2]);
-		//std::cout << "Colour: " << glm::to_string(parti.colour) << std::endl;
-		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		sphere.Draw(whiteShader);
+
+		//Collision particle(s)
+		for (int i = 0; i < partis.size(); i++)
+		{
+			// DRAW Sphere for the collision particle
+			model = glm::mat4();
+			//Translate to the particles position
+			model = glm::translate(model, partis[i].position);
+			glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), partis[i].colour[0], partis[i].colour[1], partis[i].colour[2]);
+			glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			sphere.Draw(whiteShader);
+		}
+		
 
 
 
@@ -491,8 +513,8 @@ int main()
 		
 
 		
-
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//For drawing the box of a given node
+		/*glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		boundboxShader.Use();
 		glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -502,54 +524,53 @@ int main()
 		model = glm::scale(model, glm::vec3(cloth.ClothNodes[place]->boundingVolume.xDist, cloth.ClothNodes[place]->boundingVolume.yDist, cloth.ClothNodes[place]->boundingVolume.zDist));
 		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 1.0f, 0.0f, 0.0f, 1.0f);
-		cube.Draw(boundboxShader);
+		cube.Draw(boundboxShader);*/
 
-		
-		
-		//std::cout << "Center Pos: " << glm::to_string(cloth.ClothNodes[i]->boundingVolume.centerPos) << std::endl;
-		//std::cout << cloth.clothTriangles[i].maxX << std::endl;
-		//cloth.clothTriangles[2].minX, cloth.clothTriangles[2].maxX;
 
 
 		//Draw the bodies
-		for (int i = 0; i < bpcd.bodies.size(); i++)
-		{
-			//if (drawBody)
-			//{
-				//Draw inner box
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				drawShader.Use();
-				model = glm::mat4();
-				glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-				bpcd.bodies[i].model.Draw(drawShader);
+		//for (int i = 0; i < bpcd.bodies.size(); i++)
+		//{
+		//	//if (drawBody)
+		//	//{
+		//		//Draw inner box
+		//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//		drawShader.Use();
+		//		model = glm::mat4();
+		//		glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//		bpcd.bodies[i].model.Draw(drawShader);
 
 
-				//Draw line box
-				whiteShader.Use();
-				glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-				model = glm::mat4();
-				model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				bpcd.bodies[i].model.Draw(whiteShader);
-			//}
-		}
+		//		//Draw line box
+		//		whiteShader.Use();
+		//		glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//		model = glm::mat4();
+		//		model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//		bpcd.bodies[i].model.Draw(whiteShader);
+		//	//}
+		//}
 
-		//Draw a bid collision sphere
+		//Draw a big collision sphere
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		drawShader.Use();
+		phongShader.Use();
+		glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 1.0f, 1.0f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		model = glm::mat4();
 		model = glm::translate(model, spherePos);
-		glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		largeSphere.Draw(drawShader);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		largeSphere.Draw(phongShader);
+
 
 
 #pragma endregion
@@ -558,7 +579,10 @@ int main()
 
 #pragma region BOUNDING VOLUME HIERARCHY
 
-		cloth.CheckBVH(&cloth.rootNode, &parti, timestep); //@TODO
+		//Currently rebuilding each frame, not too slow but not ideal @TODO
+		cloth.ClearNodes();
+		cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
+		
 
 #pragma endregion	
 		
@@ -569,35 +593,30 @@ int main()
 
 
 
-		glm::vec3 grav(0.0f, -0.9811f, 0.0f);
-		//cloth.addForce(grav, timestep);
+		glm::vec3 grav(0.0f, -09.811f, 0.0f);
+		cloth.addForce(grav, timestep);
 
 		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
 		glm::vec3 wind(wind1, 0, 0.2);
-		//cloth.applyWindForce(wind, timestep);
+		cloth.applyWindForce(wind, timestep);
 
 
-		//if(checkSomething)
+		for (int i = 0; i < partis.size(); i++)
 		{
-			// Particle collision check
-			for (int i = 0; i < cloth.clothTriangles.size(); i++)
-			{
-				//cloth.onBoundingBoxCollisionPoint2Tri(&cloth.clothTriangles[i], &parti, timestep);
-			}
+			cloth.CheckBVH(&cloth.rootNode, &partis[i], timestep);
 		}
-		
 
 		//Brute force plane check
-		cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+     	cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 		//Sphere collision check
-		cloth.CheckCollisionWithSphere(spherePos, 2.0f);
+		cloth.CheckCollisionWithSphere(spherePos, 2.2f);
 
 #pragma endregion
 
 
 
-
+		
 		
 
 
@@ -606,39 +625,67 @@ int main()
 		//EXPENSIVE, Not currently a good approach!
 
 #pragma region DRAW CLOTH WELL
-		//for (int i = 0; i < cloth.clothTriangles.size(); i++)
-		//{
-		//	GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
-		//	x1 = cloth.clothTriangles[i].p1->position[0];
-		//	y1 = cloth.clothTriangles[i].p1->position[1];
-		//	z1 = cloth.clothTriangles[i].p1->position[2];
-		//	x2 = cloth.clothTriangles[i].p2->position[0];
-		//	y2 = cloth.clothTriangles[i].p2->position[1];
-		//	z2 = cloth.clothTriangles[i].p2->position[2];
 
-		//	x3 = cloth.clothTriangles[i].p3->position[0];
-		//	y3 = cloth.clothTriangles[i].p3->position[1];
-		//	z3 = cloth.clothTriangles[i].p3->position[2];
+		phongShader.Use();
+		glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//model = glm::mat4();
+		//glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//cube.Draw(phongShader);
 
-		//	// Set up vertex data (and buffer(s)) and attribute pointers
-		//	GLfloat vertices[] = {
-		//		x1, y1, z1, // Left  
-		//		x2, y2, z2, // Right 
-		//		x3, y3, z3  // Top   
-		//	};
-		//	GLuint VBO, VAO;
-		//	glGenVertexArrays(1, &VAO);
-		//	glGenBuffers(1, &VBO);
-		//	// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
-		//	glBindVertexArray(VAO);
-		//	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		//	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-		//	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-		//	glEnableVertexAttribArray(0);
-		//	glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
-		//	glDrawArrays(GL_TRIANGLES, 0, 3);
-		//	glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
-		//}
+
+		for (int i = 0; i < cloth.clothTriangles.size(); i++)
+		{
+			phongShader.Use();
+			glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
+			glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
+			glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+			glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+			GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
+
+			x1 = cloth.clothTriangles[i].p1->position[0];
+			y1 = cloth.clothTriangles[i].p1->position[1];
+			z1 = cloth.clothTriangles[i].p1->position[2];
+			x2 = cloth.clothTriangles[i].p2->position[0];
+			y2 = cloth.clothTriangles[i].p2->position[1];
+			z2 = cloth.clothTriangles[i].p2->position[2];
+			x3 = cloth.clothTriangles[i].p3->position[0];
+			y3 = cloth.clothTriangles[i].p3->position[1];
+			z3 = cloth.clothTriangles[i].p3->position[2];
+
+
+			// Set up vertex data (and buffer(s)) and attribute pointers
+			GLfloat vertices[] = {
+				x1, y1, z1, // Left  
+				x2, y2, z2, // Right 
+				x3, y3, z3  // Top   
+			};
+
+			GLuint VBO, VAO;
+			glGenVertexArrays(1, &VAO);
+			glGenBuffers(1, &VBO);
+			// Bind the Vertex Array Object first, then bind and set vertex buffer(s) and attribute pointer(s).
+			glBindVertexArray(VAO);
+			glBindBuffer(GL_ARRAY_BUFFER, VBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0); // Note that this is allowed, the call to glVertexAttribPointer registered VBO as the currently bound vertex buffer object so afterwards we can safely unbind
+
+			model = glm::mat4();
+			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+			glDrawArrays(GL_TRIANGLES, 0, 3);
+			glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
+		}
+
 #pragma endregion
 
 		
@@ -656,17 +703,18 @@ int main()
 		//Renders a quad 'infinite plane'
 		//
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		boundboxShader.Use();
-		glUniform3f(glGetUniformLocation(boundboxShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		phongShader.Use();
+		glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 0.4f, 0.6f, 0.8f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		model = glm::mat4();
 		model = glm::translate(model, planePos);
 		model = glm::scale(model, glm::vec3(30.0f, 30.0f, 30.0f));
 		model = glm::rotate(model, ninety, glm::vec3(1.0f, 0.0f, 0.0f));
-		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniformMatrix4fv(glGetUniformLocation(boundboxShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		glUniform4f(glGetUniformLocation(boundboxShader.Program, "boundBoxColour"), 0.3f, 0.5f, 0.8f, 1.0f);
+		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 		RenderQuad();
 
 

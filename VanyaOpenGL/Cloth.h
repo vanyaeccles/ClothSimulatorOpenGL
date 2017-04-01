@@ -118,6 +118,9 @@ public:
 
 		verletIntegrations(dampingConstant, timestep);
 
+
+		for (int i = 0; i < clothTriangles.size(); i++)
+			clothTriangles[i].GetBoundingBox();
 	}
 
 
@@ -131,11 +134,12 @@ public:
 		//initialise the vector of particles
 		particles.resize(gridWidth * gridHeight);
 
-		for (int i = 0; i < gridWidth; i++)
+		for (int i = 0; i < gridWidth; i++) // @vertical
 		{
 			for (int j = 0; j < gridHeight; j++)
 			{
-				glm::vec3 particlePos(width * (i / (float)gridWidth), -height * (j / (float)gridHeight), 0.0f);
+				//glm::vec3 particlePos(width * (i / (float)gridWidth), -height * (j / (float)gridHeight), 0.0f); // For @vertical hanging cloth
+				glm::vec3 particlePos(width * (i / (float)gridWidth), 0.0f, height * (j / (float)gridHeight)); // For @horizontal cloth
 
 				// insert particle in column i at j'th row
 				particles[j * gridWidth + i] = Particle(particlePos, 1.0f);
@@ -151,12 +155,11 @@ public:
 		}
 	}
 
+
+	// Fixes the particle grid at specified particle positions
 	void pinCloth()
 	{
-
-		// making the upper left most three and right most three particles unmovable, for nice hanging effect
-
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < 1; i++) //@vertical
 		{
 			//getParticle(0 + i, 0)->offsetPosition(glm::vec3(0.5, 0.0, 0.0));
 			getParticle(0 + i, 0)->pinParticle();
@@ -183,6 +186,10 @@ public:
 
 #pragma region "BOUNDING_VOL_HIERARCHY"
 
+	void ClearNodes()
+	{
+		ClothNodes.clear();
+	}
 
 	Node* GetClothRootNode()
 	{
@@ -243,8 +250,7 @@ public:
 	// builds the bounding box hierarchy
 	void BuildAABBVH(Node *node, std::vector<Triangle> triangles, int threshold)
 	{
-		triangles.size();
-
+		
 
 		// Sets the mins and maxs with a default value from the triangle vector
 		float MinX = triangles[0].minX, MaxX = triangles[0].maxX, MinY = triangles[0].minY, MaxY = triangles[0].maxY, MinZ = triangles[0].minZ, MaxZ = triangles[0].maxZ;
@@ -254,8 +260,6 @@ public:
 		//Get the min and maxs of the bounding boxes
 		for (int i = 1; i < triangles.size(); i++)
 		{
-			
-
 			if (triangles[i].minX < MinX) MinX = triangles[i].minX;
 			if (triangles[i].minY < MinY) MinY = triangles[i].minY;
 			if (triangles[i].minZ < MinZ) MinZ = triangles[i].minZ;
@@ -689,7 +693,6 @@ public:
 		// I inelastic repulsion
 
 		//Compute the closest point with voronoi
-		//dChecker.voronoiSingleTriangle(cpoint.position, clothTri.p1->getPosition(), clothTri.p2->getPosition(), clothTri.p3->getPosition());
 		dChecker.voronoiSingleTriangle(cpoint->position, clothTri->p1->position, clothTri->p2->position, clothTri->p3->position);
 		glm::vec3 contactPoint = dChecker.closestPoint;
 
@@ -804,7 +807,7 @@ public:
 			if (glm::length(fricVel) > 0)
 			{
 				//std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
-				applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+				//applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 			}
 
 		}
@@ -826,9 +829,9 @@ public:
 
 		float b1 = baryPoint[0], b2 = baryPoint[1], b3 = baryPoint[2];
 
-		glm::vec3 vp1 = (b1 * (adjustedImpulse * clothTri->massinv) * contactNormal);
-		glm::vec3 vp2 = (b2 * (adjustedImpulse * clothTri->massinv) * contactNormal);
-		glm::vec3 vp3 = (b3 * (adjustedImpulse * clothTri->massinv) * contactNormal);
+		glm::vec3 vp1 = (b1 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
+		glm::vec3 vp2 = (b2 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
+		glm::vec3 vp3 = (b3 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
 
 
 		clothTri->p1->velocity += vp1;
@@ -843,7 +846,7 @@ public:
 		//Apply the velocity change to the particle
 		glm::vec3 pointVelocity = parti->getVerletVelocity(timestep) - (adjustedImpulse * parti->massinv) * contactNormal;
 
-		parti->postCollisionApplyVelocity(pointVelocity, timestep);
+		//parti->postCollisionApplyVelocity(pointVelocity, timestep);
 	}
 
 
