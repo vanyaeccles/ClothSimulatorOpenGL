@@ -21,15 +21,17 @@ public:
 	// @TODO Maybe this is silly
 	float strength;
 
+	int constraintType;
 
 
-	ParticleConstraint(Particle *part1, Particle *part2, float _strength) : p1(part1), p2(part2), strength(_strength)
+	ParticleConstraint(Particle *part1, Particle *part2, float _strength, int cType) : p1(part1), p2(part2), strength(_strength), constraintType(cType)
 	{
 		glm::vec3 p2Pos = (p2->position);
 		glm::vec3 p1Pos = (p1->position);
 
 		glm::vec3 differenceVector = (p1Pos - p2Pos);
 		restDistance = glm::length(differenceVector);
+
 	}
 
 

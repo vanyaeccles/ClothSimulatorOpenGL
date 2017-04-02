@@ -197,6 +197,8 @@ int main()
 
 	// Setup and compile our shaders
 	Shader skyboxShader("U:/Physics/FinalProject/Stuff/Shaders/skybox/skybox.vert", "U:/Physics/FinalProject/Stuff/Shaders/skybox/skybox.frag");
+
+	Shader giveColourShader("U:/Physics/FinalProject/Stuff/Shaders/givecolour.vert", "U:/Physics/FinalProject/Stuff/Shaders/givecolour.frag");
 	
 	Shader whiteShader("U:/Physics/FinalProject/Stuff/Shaders/plaincolour/white.vert", "U:/Physics/FinalProject/Stuff/Shaders/plaincolour/white.frag");
 
@@ -390,10 +392,9 @@ int main()
 	}
 
 	// A test particle
-	/*Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
-	Particle parti1(glm::vec3(4.0f, -5.0f, 7.0f), 1.0f);
-	Particle parti2(glm::vec3(2.0f, -5.0f, 5.0f), 1.0f);
-	Particle parti3(glm::vec3(2.0f, -5.0f, 7.0f), 1.0f);*/
+	//Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
+	
+	glm::vec3 moveVec(0.0f, 0.2f, 0.0f);
 
 	Particle parti(bpcd.bodies[0].modelVertices[4], 1.0f);
 	Particle parti1(bpcd.bodies[0].modelVertices[5], 1.0f);
@@ -405,6 +406,7 @@ int main()
 	Particle parti12(bpcd.bodies[1].modelVertices[6], 1.0f);
 	Particle parti13(bpcd.bodies[1].modelVertices[7], 1.0f);
 
+
 	Particle parti20(bpcd.bodies[2].modelVertices[4], 1.0f);
 	Particle parti21(bpcd.bodies[2].modelVertices[5], 1.0f);
 	Particle parti22(bpcd.bodies[2].modelVertices[6], 1.0f);
@@ -412,8 +414,8 @@ int main()
 
 	//parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
 	std::vector<Particle> partis;
-	//partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
-	//partis.push_back(parti10), partis.push_back(parti11), partis.push_back(parti12), partis.push_back(parti13);
+	partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
+	partis.push_back(parti10), partis.push_back(parti11), partis.push_back(parti12), partis.push_back(parti13);
 	partis.push_back(parti20), partis.push_back(parti21), partis.push_back(parti22), partis.push_back(parti23);
 
 	for (int i = 0; i < partis.size(); i++)
@@ -457,7 +459,7 @@ int main()
 
 
 		float dampingConstant = 0.01f;
-		int constraintIterations = 5;
+		int constraintIterations = 2;
 		int springIterations = 1;
 
 		if (playSimulation)
@@ -592,76 +594,22 @@ int main()
 #pragma endregion
 
 
-
-#pragma region BOUNDING VOLUME HIERARCHY
-
-		//Currently rebuilding each frame, not too slow but not ideal @TODO
-		cloth.ClearNodes();
-		cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
-		
-
-#pragma endregion	
-		
-		
-
-
-#pragma region CLOTH FORCES + COLLISION
-
-
-
-		glm::vec3 grav(0.0f, -09.811f, 0.0f);
-		cloth.addForce(grav, timestep);
-
-		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
-		glm::vec3 wind(wind1, 0, 0.2);
-		cloth.applyWindForce(wind, timestep);
-
-
-		for (int i = 0; i < partis.size(); i++)
+		if (1 == 1)
 		{
-			cloth.CheckBVH(&cloth.rootNode, &partis[i], timestep);
-		}
-
-		//Brute force plane check
-     	cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
-
-		//Sphere collision check
-		cloth.CheckCollisionWithSphere(spherePos, 2.2f);
-
-#pragma endregion
-
-
-
-		
-		
-
-
-
-
 		//Prob a bit expensive, but seems to work ok!
 #pragma region DRAW CLOTH WELL
 
 		phongShader.Use();
-		glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
+		//glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-		//model = glm::mat4();
-		//glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		//cube.Draw(phongShader);
-
 
 		for (int i = 0; i < cloth.clothTriangles.size(); i++)
 		{
-			phongShader.Use();
-			glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
-			glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
-			glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
-			glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+			
 
 			GLfloat x1, y1, z1, x2, y2, z2, x3, y3, z3;
 
@@ -696,14 +644,127 @@ int main()
 
 			model = glm::mat4();
 			glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+			glm::vec3 col = cloth.clothTriangles[i].p1->colour;
+			glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), col[0], col[1], col[2]);
 
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 			glBindVertexArray(0); // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent strange bugs)
 		}
 
 #pragma endregion
+		}
+
+		if (1 == 2)
+		{
+#pragma region DRAW PARTICLE LINKS
+
+		giveColourShader.Use();
+		glUniformMatrix4fv(glGetUniformLocation(giveColourShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(giveColourShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+
+
+		for (int i = 0; i < cloth.particleConstraints.size(); i++)
+		{
+			GLfloat x1, y1, z1, x2, y2, z2;
+
+			x1 = cloth.particleConstraints[i].p1->position[0];
+			y1 = cloth.particleConstraints[i].p1->position[1];
+			z1 = cloth.particleConstraints[i].p1->position[2];
+			x2 = cloth.particleConstraints[i].p2->position[0];
+			y2 = cloth.particleConstraints[i].p2->position[1];
+			z2 = cloth.particleConstraints[i].p2->position[2];
+
+
+			GLfloat lineVertices[] =
+			{
+				x1, y1, z1,
+				x2, y2, z2
+			};
+
+			GLuint lVBO, lVAO;
+			glGenVertexArrays(1, &lVAO);
+			glGenBuffers(1, &lVBO);
+			glBindVertexArray(lVAO);
+			glBindBuffer(GL_ARRAY_BUFFER, lVBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(lineVertices), lineVertices, GL_STATIC_DRAW);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, 0);
+			glBindVertexArray(0);
+
+			model = glm::mat4();
+			glUniformMatrix4fv(glGetUniformLocation(giveColourShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+			/*if (cloth.particleConstraints[i].constraintType == 0)
+			{
+				glUniform4f(glGetUniformLocation(giveColourShader.Program, "ourColor"), 1.0f, 0.0f, 0.0f, 1.0f);
+			}*/
+			/*if (cloth.particleConstraints[i].constraintType == 1)
+			{
+			glUniform4f(glGetUniformLocation(giveColourShader.Program, "ourcolor"), 0.0f, 1.0f, 0.0f, 1.0f);
+			}*/
+			/*if (cloth.particleConstraints[i].constraintType == 2)
+			{
+			glUniform4f(glGetUniformLocation(giveColourShader.Program, "ourColor"), 0.0f, 0.0f, 1.0f, 1.0f);
+			}*/
+			/*else
+			glUniform4f(glGetUniformLocation(giveColourShader.Program, "ourColor"), 1.0f, 1.0f, 1.0f, 1.0f);*/
+
+
+			glBindVertexArray(lVAO);
+			glDrawArrays(GL_LINES, 0, 2);
+			glBindVertexArray(0);
+		}
+
+#pragma endregion
+		}
+
+
+#pragma region BOUNDING VOLUME HIERARCHY
+
+		//Currently rebuilding each frame, not too slow but not ideal @TODO
+		cloth.ClearNodes();
+		cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
+
+#pragma endregion	
+		
+		
+
+
+#pragma region CLOTH FORCES + COLLISION
+
+
+
+		glm::vec3 grav(0.0f, -09.811f, 0.0f);
+		cloth.addForce(grav, timestep);
+
+		float wind1 = 1.0f * sin(glfwGetTime()); // 0.5f;
+		glm::vec3 wind(wind1, 0, 0.2);
+		cloth.applyWindForce(wind, timestep);
+
+
+		for (int i = 0; i < partis.size(); i++)
+		{
+			cloth.CheckBVH(&cloth.rootNode, &partis[i], timestep);
+		}
+
+		//Brute force plane check
+     	cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
+
+		//Sphere collision check
+		cloth.CheckCollisionWithSphere(spherePos, 2.3f);
+
+#pragma endregion
+
+
 
 		
+		
+
+
+
+
 
 
 		
@@ -726,7 +787,7 @@ int main()
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 		model = glm::mat4();
-		model = glm::translate(model, planePos - 0.1f);
+		model = glm::translate(model, planePos - 0.2f);
 		model = glm::scale(model, glm::vec3(30.0f, 30.0f, 30.0f));
 		model = glm::rotate(model, ninety, glm::vec3(1.0f, 0.0f, 0.0f));
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));

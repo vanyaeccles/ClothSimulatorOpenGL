@@ -63,9 +63,9 @@ public:
 		return &particles[y*gridWidth + x];
 	}
 
-	void constrainParticles(Particle* p1, Particle* p2, float strength)
+	void constrainParticles(Particle* p1, Particle* p2, float strength, int cType)
 	{
-		particleConstraints.push_back(ParticleConstraint(p1, p2, strength));
+		particleConstraints.push_back(ParticleConstraint(p1, p2, strength, cType));
 	}
 
 	void addSpring2Particles(Particle* p1, Particle* p2, float _Ks, float _Kd, int _springType)
@@ -99,7 +99,7 @@ public:
 
 		addTriangles();
 
-		//pinCloth();
+		pinCloth();
 
 		// Builds a BVH of AABBs
 		BuildAABBVH(&rootNode, this->clothTriangles, threshBVH);
@@ -438,38 +438,28 @@ public:
 				{
 					// masses [i, j]--[i+1, j], [i, j]--[i, j+1]
 					if (i < gridWidth - 1)
-						constrainParticles(getParticle(i, j), getParticle(i + 1, j), structuralS);
+						constrainParticles(getParticle(i, j), getParticle(i + 1, j), structuralS, strucSpring);
 
 					if (j < gridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i, j + 1), structuralS);
+						constrainParticles(getParticle(i, j), getParticle(i, j + 1), structuralS, strucSpring);
 
 					if (i < gridWidth - 1 && j < gridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1), structuralS);
+						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1), structuralS, strucSpring);
 
 					if (i < gridWidth - 1 && j < gridHeight - 1)
-						constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1), structuralS);
+						constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1), structuralS, strucSpring);
 				}
 
 				if (shearConstraints)
 				{
 					// masses [i,j]--[i+1, j+1], [i+1, j]--[i, j+1]
-					/*if (i < particleGridWidth - 1)
-						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1));
-
-					if (j < particleGridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1));*/
 
 					if (i < gridWidth - 1 && j < gridHeight - 1)
 					{
-						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1), shearS);
-						constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1), shearS);
-
-
+						constrainParticles(getParticle(i, j), getParticle(i + 1, j + 1), shearS, shearSpring);
+						//constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1), shearS, shearSpring);
 					}
 
-
-					//if (i < particleGridWidth - 1 && j < particleGridHeight - 1)
-					//	constrainParticles(getParticle(i + 1, j), getParticle(i, j + 1));
 				}
 
 				if (flexionConstraints)
@@ -478,72 +468,60 @@ public:
 
 					if (i < gridWidth - 2 && j < gridHeight - 2)
 					{
-						constrainParticles(getParticle(i, j), getParticle(i + 2, j), flexionS);
-						constrainParticles(getParticle(i, j), getParticle(i, j + 2), flexionS);
+						constrainParticles(getParticle(i, j), getParticle(i + 2, j), flexionS, flexionSpring);
+						constrainParticles(getParticle(i, j), getParticle(i, j + 2), flexionS, flexionSpring);
 					}
-
-					/*if (i < particleGridWidth - 2)
-						constrainParticles(getParticle(i, j), getParticle(i + 2, j));
-
-					if (j < particleGridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i + 2, j));
-
-					if (i < particleGridWidth - 1 && j < particleGridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i, j + 2));
-
-					if (i < particleGridWidth - 1 && j < particleGridHeight - 1)
-						constrainParticles(getParticle(i, j), getParticle(i, j + 2));*/
 				}
 			}
 		}
 	}
 
-	// masses [i,j]--[i+1, j+1], [i+1, j]--[i, j+1]
-	void shearConstraints()
-	{
-		for (int i = 0; i < gridWidth; i++)
-		{
-			for (int j = 0; j < gridHeight; j++)
-			{
+	//// masses [i,j]--[i+1, j+1], [i+1, j]--[i, j+1]
+	//void shearConstraints()
+	//{
+	//	for (int i = 0; i < gridWidth; i++)
+	//	{
+	//		for (int j = 0; j < gridHeight; j++)
+	//		{
 
-			}
-		}
-	}
+	//		}
+	//	}
+	//}
 
-	// masses [i,j]--[i+2, j], [i, j]--[i, j+2]
-	void flexionConstraints()
-	{
-		for (int i = 0; i < gridWidth; i++)
-		{
-			for (int j = 0; j < gridHeight; j++)
-			{
+	//// masses [i,j]--[i+2, j], [i, j]--[i, j+2]
+	//void flexionConstraints()
+	//{
+	//	for (int i = 0; i < gridWidth; i++)
+	//	{
+	//		for (int j = 0; j < gridHeight; j++)
+	//		{
 
-			}
-		}
-	}
+	//		}
+	//	}
+	//}
 
 
-	void initialiseParticleSecondaryConstraints()
-	{
-		// Connect secondary NESW neighbours with a distance constraint (distance 2 and sqrt(4) in the grid)
-		for (int i = 0; i < gridWidth; i++)
-		{
-			for (int j = 0; j < gridHeight; j++)
-			{
-				if (i < gridWidth - 2)
-					constrainParticles(getParticle(i, j), getParticle(i + 2, j), structuralS);
+	//void initialiseParticleSecondaryConstraints()
+	//{
+	//	// Connect secondary NESW neighbours with a distance constraint (distance 2 and sqrt(4) in the grid)
+	//	for (int i = 0; i < gridWidth; i++)
+	//	{
+	//		for (int j = 0; j < gridHeight; j++)
+	//		{
+	//			if (i < gridWidth - 2)
+	//				constrainParticles(getParticle(i, j), getParticle(i + 2, j), structuralS, );
 
-				if (j < gridHeight - 2)
-					constrainParticles(getParticle(i, j), getParticle(i, j + 2), structuralS);
+	//			if (j < gridHeight - 2)
+	//				constrainParticles(getParticle(i, j), getParticle(i, j + 2), structuralS);
 
-				if (i < gridWidth - 2 && j < gridHeight - 2)
-					constrainParticles(getParticle(i, j), getParticle(i + 2, j + 2), structuralS);
+	//			if (i < gridWidth - 2 && j < gridHeight - 2)
+	//				constrainParticles(getParticle(i, j), getParticle(i + 2, j + 2), structuralS);
 
-				if (i < gridWidth - 2 && j < gridHeight - 2)
-					constrainParticles(getParticle(i + 2, j), getParticle(i, j + 2), structuralS);
-			}
-		}
-	}
+	//			if (i < gridWidth - 2 && j < gridHeight - 2)
+	//				constrainParticles(getParticle(i + 2, j), getParticle(i, j + 2), structuralS);
+	//		}
+	//	}
+	//}
 
 #pragma endregion
 
@@ -634,6 +612,7 @@ public:
 #pragma endregion
 
 
+
 #pragma region TRIANGLES
 
 	void addTriangles()
@@ -686,6 +665,186 @@ public:
 
 		/*
 		'Proximity is determined for both point-triangle pairs and edge-edge pairs.
+		If a pair is close enough, then two kinds of repulsion forces are applied.
+		The first is based on an inelastic collision, and the second is a spring based force'
+		*/
+
+		
+		//Compute the closest point with voronoi
+		dChecker.voronoiSingleTriangle(cpoint->position, clothTri->p1->position, clothTri->p2->position, clothTri->p3->position);
+		glm::vec3 contactPoint = dChecker.closestPoint;
+
+
+		if (glm::abs(dChecker.distance) > 0.2f /*|| glm::abs(dChecker.distance) == 0.0f*/) //for some reason the returned distance is 0 on the first few checks
+		{
+		//	//std::cout << "No collision" << std::endl;
+			//return;
+		}
+
+		//else
+		//{
+		//	/*std::cout << "Distance: " << dChecker.distance << std::endl;
+		//	std::cout << "Closest point: " << glm::to_string(contactPoint) << std::endl;
+		//	std::cout << "Particle Pos: " << glm::to_string(cpoint.getPosition()) << std::endl;
+		//	std::cout << "T1: " << glm::to_string(clothTri.p1->getPosition()) << std::endl;
+		//	std::cout << "T2: " << glm::to_string(clothTri.p2->getPosition()) << std::endl;
+		//	std::cout << "T3: " << glm::to_string(clothTri.p3->getPosition()) << std::endl;
+		//	std::cout << "Triangle: " << clothTri.id << std::endl;*/
+		//	//std::cout << "collision!" << std::endl;
+		//	//return;
+		//}
+
+		//
+		// I inelastic repulsion force
+		//
+		glm::vec3 contactNormal = glm::normalize(clothTri->getTriangleNormal()); //contact normal approximated as the triangle normal
+
+		//Gets contact point in barycentric coordinates
+		glm::vec3 baryPoint = clothTri->getBaryCentricCoordinates(contactPoint);
+
+		GLfloat vrel; 
+		glm::vec3 interpolatedTriangleVelocity = (baryPoint.x * clothTri->p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri->p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri->p3->getVerletVelocity(timestep));
+		glm::vec3 pointVelocity = cpoint->getVerletVelocity(timestep);
+
+		vrel = glm::dot(contactNormal, (pointVelocity - interpolatedTriangleVelocity));
+
+		//'To stop the imminent collision we apply an inelastic impulse of magnitude Ic=mvN/ 2 in the normal direction'
+		glm::vec3 inelasticImpulse = clothTri->mass * vrel * contactNormal / 2.0f;
+
+		//std::cout << glm::to_string(inelasticImpulse) << std::endl;
+
+		if (vrel > 0)
+			applyImpulse2Triangle(inelasticImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+
+
+
+		//Change the colour of the triangle hit
+		//clothTri->FlagCollisionColour();
+		//cpoint->setColour(glm::vec3(1.0f, 0.0f, 0.0f));
+
+
+		
+		
+
+
+		//
+		// II 'The  spring  based  repulsion  force' - @TODO
+		//
+		// 'spring repulsion force is limited to a maximum when the objects touch, thus avoiding problems with stiffness'
+		float overlap = clothThickness - (glm::dot(cpoint->getPosition() - (baryPoint.x * clothTri->p1->position) - (baryPoint.y * clothTri->p2->position) - (baryPoint.z * clothTri->p3->position), contactNormal));
+
+		//std::cout << "over: " << glm::dot(cpoint->getPosition() - (baryPoint.x * clothTri->p1->position) - (baryPoint.y * clothTri->p2->position) - (baryPoint.z * clothTri->p3->position), contactNormal) << std::endl;
+
+
+		// 'we found that matching the stiffness of the stretch springs in the cloth gave good results'
+		glm::vec3 springRepulsionForce = shearKs * overlap * contactNormal;
+
+		float overlapThreshold = (0.1f * overlap) / timestep;
+
+		// ' If the normal component of relative velocity vN >= 0.1d/dt already we apply no repulsion'
+		if (vrel >= overlapThreshold)
+		{
+			//return;
+		}
+
+		else
+		{
+			//std::cout << "Spring based repulsion" << std::endl;
+
+			//This doesn't seem to work well? @TODO
+			glm::vec3 springImpulse = contactNormal * -std::min((/*timestep * */shearKs * overlap), clothTri->mass * (overlapThreshold - vrel));
+
+			springImpulse = contactNormal * -clothTri->mass * (overlapThreshold - vrel);
+			//std::cout << "SpringImpulse Force: " << glm::to_string(springImpulse) << std::endl;
+
+			if (vrel > 0)
+				applyImpulse2Triangle(springImpulse, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+		}
+
+		//
+		// III calculate and apply friction impulse
+		//
+
+		//get the precollision relative tangential velocity, projection of the relative velocity onto the triangle @TODO double check
+		glm::vec3 vrelT;
+		vrelT = (pointVelocity - interpolatedTriangleVelocity) - vrel / (pow(glm::length(contactNormal), 2)) * contactNormal;
+
+		//Bridson 2005 friction 
+		vrelT = (pointVelocity - interpolatedTriangleVelocity) - glm::dot((pointVelocity - interpolatedTriangleVelocity), contactNormal) *contactNormal;
+
+		//std::cout << "VrelT: " << glm::to_string(vrelT) << std::endl;
+
+		glm::vec3 interpolatedTriangleVelocityNEW = (baryPoint.x * clothTri->p1->getVerletVelocity(timestep)) + (baryPoint.y * clothTri->p2->getVerletVelocity(timestep)) + (baryPoint.z * clothTri->p3->getVerletVelocity(timestep));
+		glm::vec3 pointVelocityNEW = cpoint->getVerletVelocity(timestep);
+		GLfloat vrelNEW = glm::dot(contactNormal, (pointVelocityNEW - interpolatedTriangleVelocityNEW));
+
+		GLfloat deltaVrel = (vrelNEW - vrel)/*/timestep*/;
+
+		float fricCoeff = 0.45f;
+		GLfloat velTerm = deltaVrel / glm::length(vrelT); //@TODO double check
+
+		glm::vec3 fricVel = std::max((1.0f - fricCoeff * velTerm), 0.0f) * vrelT;
+
+		//std::cout << "VrelT " << glm::to_string(vrelT) << std::endl;
+
+		if (glm::length(fricVel) > 0 && vrel > 0)
+		{
+			//std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
+
+			applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep); //* 1700.0f
+		}
+
+
+		// In lieu of better collision handling, treats the particle as defining a plane of collision
+		if (vrel > 0)
+		{
+			glm::vec3 partiPosition = (clothTri->centerPos);
+			float dotPartiPlane = glm::dot((partiPosition - cpoint->position), contactNormal);
+
+			if (dotPartiPlane < 0)
+			{
+				glm::vec3 newDeltaPos = -(dotPartiPlane * contactNormal);
+
+				//std::cout << "called" << std::endl;
+				clothTri->p1->offsetPosition(newDeltaPos);
+				clothTri->p2->offsetPosition(newDeltaPos);
+				clothTri->p3->offsetPosition(newDeltaPos);
+			}
+		}
+
+		//Cheat - pins the cloth at positions
+		/*clothTri->p1->isPinned = true;
+		clothTri->p2->isPinned = true;
+		clothTri->p3->isPinned = true;*/
+
+	}
+
+
+	void applyRigidImpact(Triangle *clothTri, Particle *cpoint, float timestep)
+	{
+		//Approx center of mass as triangle center
+		glm::vec3 cOM = clothTri->centerPos;
+		// average V, assumes particle mass = 1.0
+		glm::vec3 avVel = (clothTri->p1->getVerletVelocity(timestep) + clothTri->p2->getVerletVelocity(timestep) + clothTri->p3->getVerletVelocity(timestep)) * (clothTri->p1->massinv * clothTri->p2->massinv * clothTri->p3->massinv);
+	
+		std::vector<Particle*> triPartis;
+		triPartis.push_back(clothTri->p1), triPartis.push_back(clothTri->p2), triPartis.push_back(clothTri->p3);
+
+		glm::vec3 angMom(0.0f);
+
+		for (int i = 0; i < triPartis.size(); i++)
+			angMom += glm::cross(triPartis[i]->mass * (triPartis[i]->position - cOM), triPartis[i]->getVerletVelocity(timestep) - avVel);
+	}
+
+
+
+	// Not currently working @TODO
+	void onBoundingBoxCollisionEdge2Edge(Triangle *clothTri, Particle *cpoint, float timestep)
+	{
+		dChecker.ResetChecker();
+
+		/*
+		'Proximity is determined for both point-triangle pairs and edge-edge pairs.
 		If a pair is close enough, then two kinds of repul-sion forces are applied.
 		The first is based on an inelastic collision, and the second is a spring based force'
 		*/
@@ -720,7 +879,7 @@ public:
 
 		glm::vec3 contactNormal = glm::normalize(clothTri->getTriangleNormal()); //contact normal approximated as the triangle normal
 
-		//Gets contact point in barycentric coordinates
+																				 //Gets contact point in barycentric coordinates
 		glm::vec3 baryPoint = clothTri->getBaryCentricCoordinates(contactPoint);
 
 		GLfloat vrel; //@TODO Double-Check
@@ -802,17 +961,16 @@ public:
 
 			glm::vec3 fricVel = std::max((1.0f - fricCoeff * velTerm), 0.0f) * vrelT;
 
-			
+
 
 			if (glm::length(fricVel) > 0)
 			{
 				//std::cout << "fricVel: " << glm::to_string(fricVel) << std::endl;
-				//applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
+				applyImpulse2Triangle(fricVel, clothTri, cpoint, baryPoint, contactPoint, contactNormal, timestep);
 			}
 
 		}
 	}
-
 
 
 
@@ -829,9 +987,9 @@ public:
 
 		float b1 = baryPoint[0], b2 = baryPoint[1], b3 = baryPoint[2];
 
-		glm::vec3 vp1 = (b1 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
-		glm::vec3 vp2 = (b2 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
-		glm::vec3 vp3 = (b3 * (adjustedImpulse * clothTri->massinv) * contactNormal) * 100.0f;
+		glm::vec3 vp1 = (b1 * (adjustedImpulse * clothTri->massinv) * contactNormal);
+		glm::vec3 vp2 = (b2 * (adjustedImpulse * clothTri->massinv) * contactNormal);
+		glm::vec3 vp3 = (b3 * (adjustedImpulse * clothTri->massinv) * contactNormal);
 
 
 		clothTri->p1->velocity += vp1;
@@ -846,6 +1004,7 @@ public:
 		//Apply the velocity change to the particle
 		glm::vec3 pointVelocity = parti->getVerletVelocity(timestep) - (adjustedImpulse * parti->massinv) * contactNormal;
 
+		//apply impulse to the particle
 		//parti->postCollisionApplyVelocity(pointVelocity, timestep);
 	}
 
@@ -901,8 +1060,6 @@ public:
 
 
 #pragma endregion
-
-
 
 
 
