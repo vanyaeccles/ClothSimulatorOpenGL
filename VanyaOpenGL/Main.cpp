@@ -392,11 +392,11 @@ int main()
 	}
 
 	// A test particle
-	//Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
+	Particle parti(glm::vec3(4.0f, -5.0f, 5.0f), 1.0f);
 	
 	glm::vec3 moveVec(0.0f, 0.2f, 0.0f);
 
-	Particle parti(bpcd.bodies[0].modelVertices[4], 1.0f);
+	//Particle parti(bpcd.bodies[0].modelVertices[4], 1.0f);
 	Particle parti1(bpcd.bodies[0].modelVertices[5], 1.0f);
 	Particle parti2(bpcd.bodies[0].modelVertices[6], 1.0f);
 	Particle parti3(bpcd.bodies[0].modelVertices[7], 1.0f);
@@ -413,10 +413,11 @@ int main()
 	Particle parti23(bpcd.bodies[2].modelVertices[7], 1.0f);
 
 	//parti.applyForce(glm::vec3(0.0f, 0.0f, -700.0f), timestep);
+
 	std::vector<Particle> partis;
-	partis.push_back(parti), partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
-	partis.push_back(parti10), partis.push_back(parti11), partis.push_back(parti12), partis.push_back(parti13);
-	partis.push_back(parti20), partis.push_back(parti21), partis.push_back(parti22), partis.push_back(parti23);
+	partis.push_back(parti);// partis.push_back(parti1), partis.push_back(parti2), partis.push_back(parti3);
+	//partis.push_back(parti10), partis.push_back(parti11), partis.push_back(parti12), partis.push_back(parti13);
+	//partis.push_back(parti20), partis.push_back(parti21), partis.push_back(parti22), partis.push_back(parti23);
 
 	for (int i = 0; i < partis.size(); i++)
 		partis[i].isPinned = true;
@@ -467,7 +468,7 @@ int main()
 			cloth.Update(dampingConstant, constraintIterations, springIterations, timestep);
 
 			// Particle
-			//parti.verletIntegration(dampingConstant, timestep);
+			parti.verletIntegration(dampingConstant, timestep);
 		}
 		
 
@@ -483,13 +484,13 @@ int main()
 
 			glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), (*particle).colour[0], (*particle).colour[1], (*particle).colour[2]);
 
-			// DRAW Sphere for the particle
+			// DRAW the particle
 			model = glm::mat4();
 			//Translate to the particles position
 			model = glm::translate(model, glm::vec3(partX, partY, partZ));
 			glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
 			//quadModel.Draw(whiteShader);
-			sphere.Draw(whiteShader);
+			//sphere.Draw(whiteShader);
 		}
 
 
@@ -505,6 +506,13 @@ int main()
 			sphere.Draw(whiteShader);
 		}
 		
+		// DRAW Sphere for the collision particle
+		model = glm::mat4();
+		//Translate to the particles position
+		model = glm::translate(model, parti.position);
+		glUniform3f(glGetUniformLocation(whiteShader.Program, "passedColour"), parti.colour[0], parti.colour[1], parti.colour[2]);
+		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//sphere.Draw(whiteShader);
 
 
 
@@ -546,34 +554,34 @@ int main()
 
 
 
-		//Draw the bodies
-		for (int i = 0; i < bpcd.bodies.size(); i++)
-		{
-			//if (drawBody)
-			//{
-				//Draw inner box
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				drawShader.Use();
-				model = glm::mat4();
-				glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-				glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-				bpcd.bodies[i].model.Draw(drawShader);
+		////Draw the bodies
+		//for (int i = 0; i < bpcd.bodies.size(); i++)
+		//{
+		//	//if (drawBody)
+		//	//{
+		//		//Draw inner box
+		//		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		//		drawShader.Use();
+		//		model = glm::mat4();
+		//		glUniform3f(glGetUniformLocation(drawShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//		glUniformMatrix4fv(glGetUniformLocation(drawShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//		bpcd.bodies[i].model.Draw(drawShader);
 
 
-				//Draw line box
-				whiteShader.Use();
-				glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
-				model = glm::mat4();
-				model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
-				glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				bpcd.bodies[i].model.Draw(whiteShader);
-			//}
-		}
+		//		//Draw line box
+		//		whiteShader.Use();
+		//		glUniform3f(glGetUniformLocation(whiteShader.Program, "cameraPos"), camera.Position.x, camera.Position.y, camera.Position.z);
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+		//		model = glm::mat4();
+		//		model = glm::scale(model, glm::vec3(1.001f, 1.001f, 1.001f));
+		//		glUniformMatrix4fv(glGetUniformLocation(whiteShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+		//		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		//		bpcd.bodies[i].model.Draw(whiteShader);
+		//	//}
+		//}
 
 		//Draw a big collision sphere
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -587,7 +595,7 @@ int main()
 		model = glm::mat4();
 		model = glm::translate(model, spherePos);
 		glUniformMatrix4fv(glGetUniformLocation(phongShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-		largeSphere.Draw(phongShader);
+		//largeSphere.Draw(phongShader);
 
 
 
@@ -600,7 +608,7 @@ int main()
 #pragma region DRAW CLOTH WELL
 
 		phongShader.Use();
-		//glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
+		glUniform3f(glGetUniformLocation(phongShader.Program, "objectColor"), 1.0f, 0.5f, 0.31f);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "lightColor"), 1.0f, 1.0f, 1.0f);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
 		glUniform3f(glGetUniformLocation(phongShader.Program, "viewPos"), camera.Position.x, camera.Position.y, camera.Position.z);
@@ -654,9 +662,11 @@ int main()
 #pragma endregion
 		}
 
+#pragma region DRAW PARTICLE LINKS
+
 		if (1 == 2)
 		{
-#pragma region DRAW PARTICLE LINKS
+
 
 		giveColourShader.Use();
 		glUniformMatrix4fv(glGetUniformLocation(giveColourShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
@@ -725,7 +735,7 @@ int main()
 
 		//Currently rebuilding each frame, not too slow but not ideal @TODO
 		cloth.ClearNodes();
-		cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
+		//cloth.BuildAABBVH(&cloth.rootNode, cloth.clothTriangles, 2);
 
 #pragma endregion	
 		
@@ -744,16 +754,19 @@ int main()
 		cloth.applyWindForce(wind, timestep);
 
 
+		// go through the particles, test against the root node BB of the cloth mesh
 		for (int i = 0; i < partis.size(); i++)
 		{
-			cloth.CheckBVH(&cloth.rootNode, &partis[i], timestep);
+			//cloth.CheckBVH(&cloth.rootNode, &partis[i], timestep);
 		}
+
+
 
 		//Brute force plane check
      	cloth.bruteForceParticlePlaneCollisionCheck(planeNormal, planePos);
 
 		//Sphere collision check
-		cloth.CheckCollisionWithSphere(spherePos, 2.3f);
+		//cloth.CheckCollisionWithSphere(spherePos, 2.3f);
 
 #pragma endregion
 

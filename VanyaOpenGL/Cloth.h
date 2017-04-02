@@ -99,7 +99,7 @@ public:
 
 		addTriangles();
 
-		pinCloth();
+		//pinCloth();
 
 		// Builds a BVH of AABBs
 		BuildAABBVH(&rootNode, this->clothTriangles, threshBVH);
@@ -138,8 +138,8 @@ public:
 		{
 			for (int j = 0; j < gridHeight; j++)
 			{
-				//glm::vec3 particlePos(width * (i / (float)gridWidth), -height * (j / (float)gridHeight), 0.0f); // For @vertical hanging cloth
-				glm::vec3 particlePos(width * (i / (float)gridWidth), 0.0f, height * (j / (float)gridHeight)); // For @horizontal cloth
+				glm::vec3 particlePos(width * (i / (float)gridWidth), -height * (j / (float)gridHeight), 0.0f); // For @vertical hanging cloth
+				//glm::vec3 particlePos(width * (i / (float)gridWidth), 0.0f, height * (j / (float)gridHeight)); // For @horizontal cloth
 
 				// insert particle in column i at j'th row
 				particles[j * gridWidth + i] = Particle(particlePos, 1.0f);
@@ -796,21 +796,21 @@ public:
 
 
 		// In lieu of better collision handling, treats the particle as defining a plane of collision
-		if (vrel > 0)
-		{
-			glm::vec3 partiPosition = (clothTri->centerPos);
-			float dotPartiPlane = glm::dot((partiPosition - cpoint->position), contactNormal);
+		//if (vrel > 0)
+		//{
+		//	glm::vec3 partiPosition = (clothTri->centerPos);
+		//	float dotPartiPlane = glm::dot((partiPosition - cpoint->position), contactNormal);
 
-			if (dotPartiPlane < 0)
-			{
-				glm::vec3 newDeltaPos = -(dotPartiPlane * contactNormal);
+		//	if (dotPartiPlane < 0)
+		//	{
+		//		glm::vec3 newDeltaPos = -(dotPartiPlane * contactNormal);
 
-				//std::cout << "called" << std::endl;
-				clothTri->p1->offsetPosition(newDeltaPos);
-				clothTri->p2->offsetPosition(newDeltaPos);
-				clothTri->p3->offsetPosition(newDeltaPos);
-			}
-		}
+		//		//std::cout << "called" << std::endl;
+		//		clothTri->p1->offsetPosition(newDeltaPos);
+		//		clothTri->p2->offsetPosition(newDeltaPos);
+		//		clothTri->p3->offsetPosition(newDeltaPos);
+		//	}
+		//}
 
 		//Cheat - pins the cloth at positions
 		/*clothTri->p1->isPinned = true;
@@ -1005,7 +1005,7 @@ public:
 		glm::vec3 pointVelocity = parti->getVerletVelocity(timestep) - (adjustedImpulse * parti->massinv) * contactNormal;
 
 		//apply impulse to the particle
-		//parti->postCollisionApplyVelocity(pointVelocity, timestep);
+		parti->postCollisionApplyVelocity(pointVelocity, timestep);
 	}
 
 
